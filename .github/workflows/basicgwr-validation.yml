@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "src/georegime_gwr/gwr.py"
+      - "src/georegime_gwr/bandwidth.py"
       - "experiments/validation/basicgwr_vs_mgwr_georgia.py"
       - "data/raw/georgia/**"
       - ".github/workflows/basicgwr-validation.yml"
@@ -36,7 +37,7 @@ jobs:
             "libpysal==4.10.0" \
             "mgwr==2.2.1"
 
-      - name: Validate BasicGWR numerically
+      - name: Validate BasicGWR end to end
         run: python experiments/validation/basicgwr_vs_mgwr_georgia.py
 
       - name: Show validation summary
@@ -50,6 +51,6 @@ jobs:
           if git diff --cached --quiet; then
             echo "No validation changes to commit."
           else
-            git commit -m "test: store BasicGWR Georgia validation [skip ci]"
+            git commit -m "test: store BasicGWR Georgia end-to-end validation [skip ci]"
             git push
           fi
