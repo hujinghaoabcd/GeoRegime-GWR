@@ -76,6 +76,28 @@ class BasicGWR:
         self.adaptive = None if adaptive is None else bool(adaptive)
         self.search_strategy = search_strategy
 
+        # Resolve the bandwidth *type* immediately so internal research code such
+        # as GRGWRBaseline can reuse `_weights()` with a numeric bandwidth before
+        # calling BasicGWR.fit().  Automatic bandwidth selection itself still
+        # happens only inside fit(), after X/y/coords are available.
+        self.adaptive_ = self._resolve_adaptive()
+        if not isinstance(self.bandwidth, str):
+            if self.adaptive_:
+                value = float(self.bandwidth)
+                if not value.is_integer():
+                    raise ValueError("adaptive numeric bandwidth must be an integer")
+                self.bandwidth_ = int(value)
+                self.boundary_policy_ = "pygwrx"
+            else:
+                self.bandwidth_ = float(self.bandwidth)
+                if self.bandwidth_ <= 0.0:
+                    raise ValueError("fixed numeric bandwidth must be > 0")
+                self.boundary_policy_ = "fixed"
+        else:
+            # Placeholder policy; fit() replaces it after resolving the selected
+            # automatic-search strategy.
+            self.boundary_policy_ = "pygwrx" if self.adaptive_ else "fixed"
+
     def _resolve_adaptive(self) -> bool:
         if self.adaptive is not None:
             return self.adaptive
@@ -186,6 +208,9 @@ class BasicGWR:
             self.bandwidth_ = int(search.bandwidth) if self.adaptive_ else float(search.bandwidth)
             self.search_strategy_ = strategy
         else:
+            # Numeric-bandwidth state was already initialized in __init__, but is
+            # normalized again here so a fitted object always carries explicit
+            # resolved state.
             if self.adaptive_:
                 value = float(self.bandwidth)
                 if not value.is_integer():
