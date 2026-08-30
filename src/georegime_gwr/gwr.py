@@ -1,10 +1,4 @@
-"""Minimal GWR used as the baseline engine for GR-GWR research.
-
-This module is intentionally small. It keeps only the mechanics needed by
-paper experiments: Euclidean distance, fixed/adaptive bandwidths, three common
-kernels, local weighted least squares, automatic adaptive AICc bandwidth
-selection, and fitted local coefficients.
-"""
+"""Minimal standard GWR used as the baseline engine for GR-GWR research."""
 
 from __future__ import annotations
 
@@ -14,7 +8,11 @@ from numbers import Integral
 import numpy as np
 from scipy.spatial.distance import cdist
 
-from .bandwidth import MGWRCompatibleAICcSelector
+from .bandwidth import (
+    FixedGoldenAICcSelector,
+    MGWRCompatibleAICcSelector,
+    PyGWRxAdaptiveAICcSelector,
+)
 
 
 @dataclass
@@ -26,37 +24,85 @@ class GWRResult:
 
 
 class BasicGWR:
-    """轻量级基础 GWR。
+    """轻量级标准 GWR。
 
     Parameters
     ----------
     bandwidth : int, float, or "auto"
-        Integer = adaptive neighbour-order bandwidth; float = fixed distance;
-        ``"auto"`` = adaptive AICc search reproducing the standard-GWR search
-        behavior of ``mgwr==2.2.1`` used by the canonical Georgia benchmark.
+        Integer means adaptive neighbour-order bandwidth; float means fixed
+        distance. ``"auto"`` activates AICc bandwidth selection.
     kernel : {"bisquare", "gaussian", "exponential"}
     fit_intercept : bool
+    adaptive : bool or None, optional
+        For ``bandwidth="auto"``, the default ``None`` resolves to ``True``.
+        For numeric bandwidths, ``None`` preserves the historical convention:
+        integer -> adaptive, float -> fixed.
+    search_strategy : str or None, optional
+        Automatic-search policy. Defaults to ``"exhaustive"`` for adaptive
+        bandwidths and ``"golden_section"`` for fixed bandwidths.
+
+        Adaptive choices:
+        - ``"exhaustive"``: current PyGWRx integer exhaustive AICc search;
+        - ``"mgwr_golden"``: mgwr 2.2.1 compatibility search.
+
+        Fixed choice:
+        - ``"golden_section"``: continuous PyGWRx-style golden-section AICc search.
 
     Notes
     -----
-    这里只服务于 GR-GWR 方法研究，不追求 pyGWRx 的完整公共 API。
+    The research default is deliberately the strict adaptive exhaustive search.
+    ``mgwr_golden`` exists only for exact historical/canonical reproduction.
     """
 
-    def __init__(self, bandwidth="auto", kernel="bisquare", fit_intercept=True):
+    def __init__(
+        self,
+        bandwidth="auto",
+        kernel="bisquare",
+        fit_intercept=True,
+        *,
+        adaptive=None,
+        search_strategy=None,
+    ):
         if kernel not in {"bisquare", "gaussian", "exponential"}:
             raise ValueError("kernel must be bisquare, gaussian, or exponential")
         if isinstance(bandwidth, str) and bandwidth.lower() != "auto":
             raise ValueError("string bandwidth must be 'auto'")
+        if adaptive is not None and not isinstance(adaptive, (bool, np.bool_)):
+            raise TypeError("adaptive must be bool or None")
+
         self.bandwidth = bandwidth
         self.kernel = kernel
-        self.fit_intercept = fit_intercept
+        self.fit_intercept = bool(fit_intercept)
+        self.adaptive = None if adaptive is None else bool(adaptive)
+        self.search_strategy = search_strategy
+
+    def _resolve_adaptive(self) -> bool:
+        if self.adaptive is not None:
+            return self.adaptive
+        if isinstance(self.bandwidth, str):
+            return True
+        return isinstance(self.bandwidth, Integral) and not isinstance(self.bandwidth, (bool, np.bool_))
+
+    def _resolve_search_strategy(self, adaptive: bool) -> str | None:
+        if not isinstance(self.bandwidth, str):
+            return None
+        if self.search_strategy is None:
+            return "exhaustive" if adaptive else "golden_section"
+        strategy = str(self.search_strategy).strip().lower()
+        if adaptive and strategy not in {"exhaustive", "mgwr_golden"}:
+            raise ValueError("adaptive search_strategy must be 'exhaustive' or 'mgwr_golden'")
+        if not adaptive and strategy != "golden_section":
+            raise ValueError("fixed search_strategy must be 'golden_section'")
+        return strategy
 
     def _active_bandwidth(self):
         return getattr(self, "bandwidth_", self.bandwidth)
 
     def _weights(self, distances: np.ndarray) -> np.ndarray:
         bandwidth = self._active_bandwidth()
-        if isinstance(bandwidth, Integral):
+        if self.adaptive_:
+            if isinstance(bandwidth, (bool, np.bool_)) or not float(bandwidth).is_integer():
+                raise ValueError("adaptive bandwidth must be an integer neighbour count")
             k = min(int(bandwidth), distances.size)
             if k < 1:
                 raise ValueError("adaptive bandwidth must be >= 1")
@@ -64,8 +110,10 @@ class BasicGWR:
             if bw <= 1e-12:
                 positive = distances[distances > 1e-12]
                 bw = float(np.min(positive)) if positive.size else 1.0
-            # mgwr 2.2.1 compact-kernel boundary convention.
-            bw *= 1.0000001
+            if self.boundary_policy_ == "mgwr":
+                bw *= 1.0000001
+            else:
+                bw = float(np.nextafter(bw, np.inf))
         else:
             bw = float(bandwidth)
             if bw <= 0:
@@ -116,17 +164,42 @@ class BasicGWR:
             raise ValueError("X, y, and coords must have the same rows")
 
         Xd = np.column_stack([np.ones(X.shape[0]), X]) if self.fit_intercept else X.copy()
+        self.adaptive_ = self._resolve_adaptive()
+        strategy = self._resolve_search_strategy(self.adaptive_)
 
-        if isinstance(self.bandwidth, str) and self.bandwidth.lower() == "auto":
-            selector = MGWRCompatibleAICcSelector(kernel=self.kernel)
+        if isinstance(self.bandwidth, str):
+            if self.adaptive_ and strategy == "exhaustive":
+                selector = PyGWRxAdaptiveAICcSelector(kernel=self.kernel)
+                self.boundary_policy_ = "pygwrx"
+            elif self.adaptive_ and strategy == "mgwr_golden":
+                selector = MGWRCompatibleAICcSelector(kernel=self.kernel)
+                self.boundary_policy_ = "mgwr"
+            elif not self.adaptive_ and strategy == "golden_section":
+                selector = FixedGoldenAICcSelector(kernel=self.kernel)
+                self.boundary_policy_ = "fixed"
+            else:
+                raise RuntimeError("unsupported bandwidth search configuration")
+
             search = selector.select(Xd, y, coords)
             self.bandwidth_selector_ = selector
             self.bandwidth_search_ = search
-            self.bandwidth_ = int(search.bandwidth)
+            self.bandwidth_ = int(search.bandwidth) if self.adaptive_ else float(search.bandwidth)
+            self.search_strategy_ = strategy
         else:
-            self.bandwidth_ = self.bandwidth
+            if self.adaptive_:
+                value = float(self.bandwidth)
+                if not value.is_integer():
+                    raise ValueError("adaptive numeric bandwidth must be an integer")
+                self.bandwidth_ = int(value)
+                self.boundary_policy_ = "pygwrx"
+            else:
+                self.bandwidth_ = float(self.bandwidth)
+                if self.bandwidth_ <= 0.0:
+                    raise ValueError("fixed numeric bandwidth must be > 0")
+                self.boundary_policy_ = "fixed"
             self.bandwidth_selector_ = None
             self.bandwidth_search_ = None
+            self.search_strategy_ = None
 
         distances = cdist(coords, coords)
         n, p = Xd.shape
