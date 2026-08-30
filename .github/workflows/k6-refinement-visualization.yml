@@ -1,0 +1,54 @@
+name: k6-refinement-visualization
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/k6-refinement-visualization.yml"
+      - "experiments/spatial/plot_georgia_k6_refinement_changes.py"
+      - "results/real_data/georgia_k6_unified_label_refinement/final_county_results.csv"
+      - "data/raw/georgia/**"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  visualize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install plotting environment
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "numpy==1.26.4" "pandas==2.2.3" "matplotlib==3.8.4" "geopandas==0.14.4"
+
+      - name: Plot K6 refinement changes
+        run: python experiments/spatial/plot_georgia_k6_refinement_changes.py
+
+      - name: Show change summary
+        run: |
+          cat results/real_data/georgia_k6_unified_label_refinement/label_change_summary.json
+          cat results/real_data/georgia_k6_unified_label_refinement/changed_transition_summary.csv
+          cat results/real_data/georgia_k6_unified_label_refinement/regime_size_change.csv
+
+      - name: Persist visualization outputs
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f results/real_data/georgia_k6_unified_label_refinement
+          if git diff --cached --quiet; then
+            echo "No changes."
+          else
+            git commit -m "test: store K6 refinement visualization [skip ci]"
+            git fetch origin main
+            git rebase origin/main
+            git push origin HEAD:main
+          fi
