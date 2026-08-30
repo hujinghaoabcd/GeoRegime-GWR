@@ -72,5 +72,15 @@ jobs:
             echo "No validation changes to commit."
           else
             git commit -m "test: store GWR validation and Georgia spatial outputs [skip ci]"
-            git push
+            for attempt in 1 2 3; do
+              git fetch origin main
+              git rebase origin/main
+              if git push origin HEAD:main; then
+                exit 0
+              fi
+              echo "Push attempt ${attempt} failed; retrying after refresh..."
+              sleep 3
+            done
+            echo "Failed to persist validation outputs after 3 attempts."
+            exit 1
           fi
