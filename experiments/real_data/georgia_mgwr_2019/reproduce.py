@@ -1,7 +1,7 @@
 """Reproduce the Georgia GWR/MGWR example from Oshan et al. (2019).
 
 This script intentionally uses the external ``mgwr`` package rather than the
-research implementation in this repository.  Its purpose is to establish a
+research implementation in this repository. Its purpose is to establish a
 trusted baseline before GR-GWR experiments are introduced.
 
 Reference model specification
@@ -35,9 +35,9 @@ import shutil
 from importlib import metadata
 from pathlib import Path
 
+import libpysal as ps
 import numpy as np
 import pandas as pd
-import libpysal as ps
 from mgwr.gwr import GWR, MGWR
 from mgwr.sel_bw import Sel_BW
 
@@ -124,7 +124,9 @@ def fit_models(data_path: Path):
 
     y = data["PctBach"].to_numpy(dtype=float).reshape((-1, 1))
     X = data[["PctFB", "PctBlack", "PctRural"]].to_numpy(dtype=float)
-    coords = list(zip(data["X"].to_numpy(dtype=float), data["Y"].to_numpy(dtype=float)))
+    coords = list(
+        zip(data["X"].to_numpy(dtype=float), data["Y"].to_numpy(dtype=float))
+    )
 
     # Exactly match the published notebook preprocessing (ddof=0).
     X = (X - X.mean(axis=0)) / X.std(axis=0)
@@ -142,8 +144,17 @@ def fit_models(data_path: Path):
 
 
 def diagnostics(result) -> dict[str, float]:
+    """Extract comparable diagnostics from GWR or MGWR results.
+
+    mgwr 2.2.1 deliberately leaves ``MGWRResults.RSS`` unimplemented for
+    multiple bandwidths. For a Gaussian model the notebook RSS is simply the
+    sum of squared response residuals, so compute it directly. This also gives
+    the same quantity for ordinary GWR.
+    """
+    residual = np.asarray(result.resid_response, dtype=float).reshape(-1)
+    rss = float(np.dot(residual, residual))
     return {
-        "rss": _scalar(result.RSS),
+        "rss": rss,
         "enp": _scalar(result.ENP),
         "aic": float(result.aic),
         "aicc": float(result.aicc),
@@ -160,7 +171,9 @@ def build_comparison(actual: dict) -> dict:
     )
     comparison["mgwr"]["bandwidth_deltas"] = [
         float(a - b)
-        for a, b in zip(actual["mgwr"]["bandwidths"], REFERENCE["mgwr"]["bandwidths"])
+        for a, b in zip(
+            actual["mgwr"]["bandwidths"], REFERENCE["mgwr"]["bandwidths"]
+        )
     ]
     for model in ("gwr", "mgwr"):
         for key in ("rss", "enp", "aic", "aicc", "bic", "r2", "adj_r2"):
@@ -242,7 +255,10 @@ def main() -> None:
     parser.add_argument(
         "--vendor-data",
         action="store_true",
-        help="copy canonical libpysal Georgia CSV/shapefile files into data/raw/georgia",
+        help=(
+            "copy canonical libpysal Georgia CSV/shapefile files into "
+            "data/raw/georgia"
+        ),
     )
     args = parser.parse_args()
 
