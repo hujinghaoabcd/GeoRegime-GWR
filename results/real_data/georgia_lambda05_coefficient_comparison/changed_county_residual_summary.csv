@@ -1,0 +1,3 @@
+group,n,gwr_mean_abs_residual,grgwr_mean_abs_residual,mean_abs_resid_improvement_gr_vs_gwr
+changed,33,0.3232198619081428,0.2051209769220614,0.11809888498608137
+unchanged,126,0.4193935040231974,0.3517781263228669,0.06761537770033041

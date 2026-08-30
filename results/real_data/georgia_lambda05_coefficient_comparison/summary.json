@@ -1,0 +1,71 @@
+{
+  "status": "exploratory_lambda05_coefficient_diagnostic",
+  "lambda_working_baseline": 0.5,
+  "n": 159,
+  "final_regime_sizes": {
+    "1": 62,
+    "2": 14,
+    "3": 12,
+    "4": 38,
+    "5": 16,
+    "6": 17
+  },
+  "changed_from_initial": 33,
+  "boundary_counties": 68,
+  "interior_counties": 91,
+  "ordinary_gwr": {
+    "rss": 51.08290055685607,
+    "rmse": 0.5668122300472797,
+    "mae": 0.399432936791771,
+    "r2": 0.6787238958688298
+  },
+  "mgwr": {
+    "rss": 50.89937946787043,
+    "rmse": 0.5657931454566466,
+    "mae": 0.40097797778381383,
+    "r2": 0.679878116554274
+  },
+  "grgwr_lambda05": {
+    "rss": 40.112558266368104,
+    "rmse": 0.502275064749368,
+    "mae": 0.3213398500321338,
+    "r2": 0.7477197593310182
+  },
+  "boundary_residual_summary": [
+    {
+      "group": "boundary",
+      "n": 68,
+      "gwr_mean_abs_residual": 0.33699696147131847,
+      "mgwr_mean_abs_residual": 0.3387367854547014,
+      "grgwr_mean_abs_residual": 0.21367351647834532,
+      "mean_abs_resid_improvement_gr_vs_gwr": 0.12332344499297315,
+      "mean_abs_resid_improvement_gr_vs_mgwr": 0.12506326897635608
+    },
+    {
+      "group": "interior",
+      "n": 91,
+      "gwr_mean_abs_residual": 0.4460883908773839,
+      "mgwr_mean_abs_residual": 0.4474878797440298,
+      "grgwr_mean_abs_residual": 0.40179381356683286,
+      "mean_abs_resid_improvement_gr_vs_gwr": 0.044294577310551,
+      "mean_abs_resid_improvement_gr_vs_mgwr": 0.04569406617719689
+    }
+  ],
+  "changed_county_residual_summary": [
+    {
+      "group": "changed",
+      "n": 33,
+      "gwr_mean_abs_residual": 0.3232198619081428,
+      "grgwr_mean_abs_residual": 0.2051209769220614,
+      "mean_abs_resid_improvement_gr_vs_gwr": 0.11809888498608137
+    },
+    {
+      "group": "unchanged",
+      "n": 126,
+      "gwr_mean_abs_residual": 0.4193935040231974,
+      "grgwr_mean_abs_residual": 0.3517781263228669,
+      "mean_abs_resid_improvement_gr_vs_gwr": 0.06761537770033041
+    }
+  ],
+  "interpretation_guard": "All results are in-sample diagnostics. Final boundary labels are data-adaptive; boundary/interior contrasts are descriptive and not causal or out-of-sample evidence."
+}
