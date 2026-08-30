@@ -1,0 +1,27 @@
+{
+  "status": "exploratory_working_candidate_only",
+  "K": 6,
+  "n_counties": 159,
+  "regime_sizes": [
+    53,
+    19,
+    17,
+    22,
+    27,
+    21
+  ],
+  "all_regimes_connected": true,
+  "total_wcss": 41.17628003831048,
+  "queen_boundary_edges": 102,
+  "queen_boundary_fraction": 0.23665893271461716,
+  "fingerprint_terms": [
+    "PctFB",
+    "PctBlack",
+    "PctRural"
+  ],
+  "intercept_used": false,
+  "coordinates_used": false,
+  "boundary_aware_refit_applied": false,
+  "final_K_selected": false,
+  "note": "Focused diagnostic only. K=6 remains an exploratory working candidate."
+}
