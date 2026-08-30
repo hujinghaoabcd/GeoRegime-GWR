@@ -176,7 +176,7 @@ Historical mgwr 2.2.1 默认采用 rounded discrete golden-section，只访问�
 
 ## 6. 当前 GR-GWR baseline 流程
 
-当前 baseline 仍是：
+当前 baseline 代码仍是：
 
 1. kNN + MST adjacency；
 2. full-domain ordinary GWR；
@@ -190,50 +190,72 @@ Historical mgwr 2.2.1 默认采用 rounded discrete golden-section，只访问�
 
 该流程只是研究起点，不是冻结算法。
 
-## 7. 当前未冻结问题
+## 7. 当前 component research 已推进到哪里
 
-最高优先级包括：
+Georgia 当前已经实际完成：
 
-- 是否直接定义显式空间邻接矩阵 `W`；
-- polygon 是否优先 Queen/Rook；
-- point data 是否用 kNN/Delaunay/distance graph；
-- 是否取消强制 MST；
-- coordinates 是否进入 clustering features；
-- Ward 是否保留；
-- regime number；
-- ICM 是否保留；
-- boundary penalty；
-- shared vs variable-specific regimes；
-- hard boundary vs partial borrowing；
-- GR-GWR 正式 bandwidth policy；
-- inference / diagnostics。
+1. 明确 `D != W`：`D` 负责 GWR 距离核，`W` 负责空间拓扑/允许合并；
+2. 建立 polygon Queen `W`：159 counties、431 undirected edges、整体连通；
+3. ordinary BasicGWR research default：adaptive exhaustive `k=116`；
+4. 得到 159×4 local coefficients；
+5. exploratory fingerprint 暂用三个标准化 local slopes，不含 intercept、不含 coordinates；
+6. 计算 431 条 Queen edges 的 fingerprint difference；
+7. 用 Queen-constrained Ward 生成 `K=2..15` 初始分区；
+8. 所有候选 regime 均保持空间连通；
+9. 当前只把 `K=6` 当作 working candidate 继续看效果，**不是最终选择**。
 
-## 8. 新对话恢复顺序
+当前 K=6：
+
+- WCSS = `41.17628003831048`；
+- regime sizes = `53, 19, 17, 22, 27, 21`。
+
+## 8. 当前最重要的未解决问题
+
+必须先读：
+
+`docs/project/PENDING_GRGWR_METHOD_QUESTIONS.md`
+
+其中已经明确记录以下审稿风险/研究问题：
+
+- ordinary GWR 本身会平滑边界，为什么还能基于它的 local coefficients 初始化 regime？
+- pilot GWR 是否可能把真实 boundary signal 平滑掉？
+- 是否最终需要 `initial segmentation -> regime-restricted GWR -> label refinement` 迭代修正？
+- fingerprint 为什么排除 intercept；是否应考虑 coefficient uncertainty？
+- coordinates 是否应该进入 clustering features？
+- Ward 是最终算法还是只作为 initializer？
+- K 如何选择；为什么 WCSS 不能单独决定 K？
+- `K_max` 如何定义；不能把 15 写成理论上限；
+- 是否用 spatial/blocked CV + AICc/BIC + stability + minimum regime size/1-SE rule 形成正式 K-selection protocol？
+
+**这些全部尚未冻结。不要在后续对话里把当前探索规格误写成最终方法。**
+
+## 9. 新对话恢复顺序
 
 必须按顺序读：
 
 1. `00_PROJECT_HANDOFF.md`
 2. `ARCHITECTURE_INDEX.md`
 3. `docs/project/CURRENT_STATUS.md`
-4. `docs/decisions/ADR-0003-standard-gwr-bandwidth-search-policy.md`
-5. `docs/design/GRGWR_BASELINE_SPEC.md`
-6. `docs/design/RESEARCH_QUESTIONS.md`
-7. `docs/experiments/EXPERIMENT_PLAN.md`
-8. 其他最新 ADR
-9. 当前源码与 tests / CI
+4. `docs/project/PENDING_GRGWR_METHOD_QUESTIONS.md`
+5. `docs/decisions/ADR-0003-standard-gwr-bandwidth-search-policy.md`
+6. `docs/design/GRGWR_BASELINE_SPEC.md`
+7. `docs/design/RESEARCH_QUESTIONS.md`
+8. `docs/experiments/EXPERIMENT_PLAN.md`
+9. 其他最新 ADR
+10. 当前源码、最新 experiment scripts、results 与 CI
 
 冲突优先级：
 
 `最新 ADR > CURRENT_STATUS > 正式设计规范 > handoff 中的旧描述 > README`
 
-## 9. 当前下一步
+## 10. 当前下一步
 
 **基础 GWR 阶段已经结束，不要再从头复核。**
 
-现在进入 GR-GWR 组件研究：
+当前直接继续：
 
-1. 第一优先级：把 `W` 作为显式空间结构重新设计，明确它与距离矩阵 `D` 的不同职责；
-2. 建立 globally smooth / piecewise constant / within-regime smooth + between-regime jump DGP；
-3. 比较 Queen/Rook、kNN、kNN+MST；
-4. 再做 coordinates、Ward、ICM 等消融；
-5. 最终依据理论和实验冻结 GR-GWR v1 paper algorithm。
+1. 单独展开 Georgia exploratory `K=6` initial partition；
+2. 检查各 regime 空间形状、样本量、fingerprint center / dispersion；
+3. 检查是否存在狭长连接、局部碎片或内部 coefficient inconsistency；
+4. 目前先不做 boundary-aware refit；
+5. 看清 K=6 初始效果后，再决定下一步算法。
