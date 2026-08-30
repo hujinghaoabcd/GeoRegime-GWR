@@ -6,7 +6,7 @@ Last updated: 2026-08-30
 
 **Phase 0 — Research repository extraction and standard-GWR baseline recovery**
 
-目标：把 GR-GWR 从 pyGWRx 的成熟软件包环境中抽离出来，建立一个可快速修改、可做论文实验、可跨对话持续开发的独立研究仓库；当前先把标准 GWR 基线彻底固定，再进入 GR-GWR 修改。
+目标：把 GR-GWR 从 pyGWRx 的成熟软件包环境中抽离出来，建立一个可快速修改、可做论文实验、可跨对话持续开发的独立研究仓库；当前标准 GWR 基线已经固定并完成数值验证，可以进入 GR-GWR 组件研究。
 
 ## Completed
 
@@ -31,6 +31,39 @@ Last updated: 2026-08-30
 - 外部标准-GWR复现代码：`experiments/real_data/georgia_gwr_baseline/reproduce.py`。
 - 机器可读结果：`results/reproduction/georgia_gwr_baseline/summary.json`。
 - 159 个县的外部 GWR 局部参数：`results/reproduction/georgia_gwr_baseline/gwr_parameters.csv`。
+
+## BasicGWR numerical validation — PASSED
+
+仓库内 `BasicGWR` 已在 canonical Georgia 数据上，与外部 `mgwr.gwr.GWR` 做逐点数值验证。两者使用完全相同：
+
+- 159 counties；
+- `PctBach ~ PctFB + PctBlack + PctRural`；
+- X/y z-score (`ddof=0`)；
+- adaptive bisquare；
+- fixed verified bandwidth = 117。
+
+验证对象包括 159 × 4 local parameters、159 fitted values、159 residuals、完整 159 × 159 hat matrix、RSS 与 trace(S)。
+
+结果：
+
+- max absolute parameter difference = `5.551115123125783e-16`；
+- RMSE parameter difference = `9.131398707249937e-17`；
+- max absolute fitted difference = `5.551115123125783e-16`；
+- max absolute residual difference = `5.551115123125783e-16`；
+- max absolute hat-matrix difference = `5.551115123125783e-17`；
+- BasicGWR RSS = `51.186191553463985`；
+- mgwr.GWR RSS = `51.18619155346399`；
+- trace(S) 两者均为 `11.804769716730094`；
+- `1e-8` tolerance test = **PASS**。
+
+这些差异处于浮点机器精度量级，因此当前 `BasicGWR` 可视为已数值复现 `mgwr.gwr.GWR` 的标准 Gaussian adaptive-bisquare GWR 核心计算。
+
+关键文件：
+
+- `experiments/validation/basicgwr_vs_mgwr_georgia.py`
+- `results/validation/basicgwr_vs_mgwr_georgia/summary.json`
+- `results/validation/basicgwr_vs_mgwr_georgia/pointwise_comparison.csv`
+- `.github/workflows/basicgwr-validation.yml`
 
 ## Current GR-GWR baseline flow
 
@@ -76,27 +109,24 @@ Georgia benchmark 固定使用 canonical PySAL/mgwr standard-GWR 规格，不与
 
 后续 `BasicGWR`、GR-GWR 及其他对照模型若使用该 benchmark，必须显式记录任何偏离上述规格的地方。
 
-## Current highest-priority task
+## Current highest-priority question
 
-**Validate repository `BasicGWR` numerically against the trusted external `mgwr.gwr.GWR` Georgia result before changing GR-GWR.**
+**With the standard GWR engine now validated, should GR-GWR be reformulated around an explicit spatial adjacency matrix W rather than a hard-coded kNN+MST graph construction?**
 
-通过后再继续研究：
+当前讨论倾向：
 
-- 是否把 GR-GWR 重构为显式空间邻接矩阵 `W`；
-- polygon 的 Queen/Rook；
-- coordinates-in-features；
-- Ward；
-- ICM。
+- 理论层面使用标准 `W` 更符合 GIS / spatial statistics 表述；
+- polygon 可用 Queen/Rook contiguity；
+- point data 可用 kNN / Delaunay / distance graph；
+- 图只是 `W` 的计算表示，不应成为模型定义本身。
+
+但该设计尚未正式接受为 v1 paper algorithm，需要通过后续基线与消融实验决定。
 
 ## Next tasks
 
-1. 用仓库内 `BasicGWR` 在同一 Georgia 规格下对照外部 `mgwr.gwr.GWR`：
-   - bandwidth；
-   - 159 × 4 local parameters；
-   - fitted values；
-   - residuals；
-   - hat-matrix based diagnostics。
-2. 修正 `BasicGWR` 与标准 GWR 的任何数值/定义差异，直到基线可信。
-3. 建立三个最基础 DGP：globally smooth、piecewise constant、within-regime smooth + between-regime jump。
-4. 再进入 `W / coordinates-in-features / Ward / ICM` 的逐组件研究。
-5. 在上述结果出来前，不宣布任何 GR-GWR 算法组件为最终方案。
+1. 建立三个最基础 DGP：globally smooth、piecewise constant、within-regime smooth + between-regime jump。
+2. 设计显式 `W` 接口，并比较 Queen/Rook、kNN、kNN+MST。
+3. 建立 coordinates-in-clustering-features vs no-coordinates 消融。
+4. 建立 no-refinement vs ICM-refinement 消融。
+5. 再评估 Ward、regime number selection 与 boundary penalty。
+6. 在上述结果出来前，不宣布任何 GR-GWR 算法组件为最终方案。
