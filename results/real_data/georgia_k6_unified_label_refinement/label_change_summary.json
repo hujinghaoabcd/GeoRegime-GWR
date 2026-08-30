@@ -1,0 +1,86 @@
+{
+  "changed_counties": 35,
+  "unchanged_counties": 124,
+  "initial_sizes": [
+    53,
+    19,
+    17,
+    22,
+    27,
+    21
+  ],
+  "final_sizes": [
+    62,
+    19,
+    6,
+    38,
+    17,
+    17
+  ],
+  "size_changes": [
+    9,
+    0,
+    -11,
+    16,
+    -10,
+    -4
+  ],
+  "transition_counts": [
+    {
+      "from": 3,
+      "to": 4,
+      "count": 11
+    },
+    {
+      "from": 5,
+      "to": 1,
+      "count": 7
+    },
+    {
+      "from": 2,
+      "to": 4,
+      "count": 3
+    },
+    {
+      "from": 5,
+      "to": 3,
+      "count": 3
+    },
+    {
+      "from": 6,
+      "to": 4,
+      "count": 3
+    },
+    {
+      "from": 3,
+      "to": 1,
+      "count": 2
+    },
+    {
+      "from": 6,
+      "to": 2,
+      "count": 2
+    },
+    {
+      "from": 3,
+      "to": 5,
+      "count": 1
+    },
+    {
+      "from": 4,
+      "to": 2,
+      "count": 1
+    },
+    {
+      "from": 4,
+      "to": 6,
+      "count": 1
+    },
+    {
+      "from": 5,
+      "to": 4,
+      "count": 1
+    }
+  ],
+  "note": "Exploratory same-sample refinement visualization; not final partition validation."
+}
