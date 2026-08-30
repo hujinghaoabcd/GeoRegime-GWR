@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# Research outputs
+results/**/*.png
+results/**/*.svg
+results/**/*.pdf
+results/**/*.csv
+results/**/*.parquet
+results/**/*.npy
+results/**/*.npz
+!results/.gitkeep
+
+# Local notebooks / IDE
+.ipynb_checkpoints/
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
