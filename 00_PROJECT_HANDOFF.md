@@ -113,7 +113,38 @@
 
 论文中的首创性声明必须使用谨慎措辞，例如 `To the best of our knowledge`，并把创新限定在完整耦合框架，而不是单个已有组件。
 
-## 6. 新对话恢复顺序
+## 6. 已建立的外部基准：Georgia / MGWR
+
+已将 Oshan et al. (2019) / PySAL 的 canonical Georgia benchmark 纳入仓库，不能与其他 `GeorgiaEduc` 变体混淆。
+
+固定规格：
+
+- 159 Georgia counties，1990 Census；
+- response: `PctBach`；
+- predictors: `PctFB`, `PctBlack`, `PctRural`；
+- projected coordinates: `X`, `Y`；
+- X 与 y 均按 `ddof=0` 做 z-score；
+- adaptive bisquare；
+- AICc bandwidth selection。
+
+已使用 `mgwr==2.2.1` 在线复现成功：
+
+- GWR bandwidth = 117，AICc = 299.050809，R2 = 0.678074；
+- MGWR bandwidths = [92, 101, 136, 158]，AICc = 297.120138，R2 = 0.679878；
+- 带宽与历史官方 notebook 完全一致，诊断差异仅为原文展示精度造成的四舍五入量级。
+
+关键文件：
+
+- `data/raw/georgia/GData_utm.csv`
+- `data/raw/georgia/G_utm.*`
+- `experiments/real_data/georgia_mgwr_2019/reproduce.py`
+- `results/reproduction/georgia_mgwr_2019/summary.json`
+- `results/reproduction/georgia_mgwr_2019/gwr_parameters.csv`
+- `results/reproduction/georgia_mgwr_2019/mgwr_parameters.csv`
+
+该 benchmark 先作为可信的外部 GWR/MGWR 基线。下一步可用仓库内 `BasicGWR` 对照 `mgwr.GWR`，再用于 GR-GWR 实验。
+
+## 7. 新对话恢复顺序
 
 按以下顺序读取：
 
@@ -132,11 +163,11 @@
 
 但任何发现冲突的人都应尽快同步修正文档。
 
-## 7. 当前下一步
+## 8. 当前下一步
 
 不要直接大改模型。下一阶段首先完成：
 
-1. 验证 baseline 能运行；
+1. 用 `BasicGWR` 在 canonical Georgia 规格下对照 `mgwr.GWR`，验证基础 GWR 引擎；
 2. 建立最小 synthetic DGP；
 3. 将 `W` 从“固定 kNN+MST 构造结果”提升为显式模型输入的候选设计；
 4. 对 `W / coordinates-in-features / ICM` 做独立消融；
