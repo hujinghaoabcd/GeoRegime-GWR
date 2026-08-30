@@ -6,7 +6,11 @@ on:
     paths:
       - ".github/workflows/k6-refinement-visualization.yml"
       - "experiments/spatial/plot_georgia_k6_refinement_changes.py"
+      - "experiments/real_data/georgia_gwr_baseline/analyze_georgia_k6_refinement_drivers.py"
       - "results/real_data/georgia_k6_unified_label_refinement/final_county_results.csv"
+      - "results/real_data/georgia_k6_unified_label_refinement/accepted_label_moves.csv"
+      - "results/real_data/georgia_k6_unified_label_refinement/changed_counties.csv"
+      - "results/real_data/georgia_k6_unified_label_refinement/label_path.csv"
       - "data/raw/georgia/**"
   workflow_dispatch:
 
@@ -33,11 +37,16 @@ jobs:
       - name: Plot K6 refinement changes
         run: python experiments/spatial/plot_georgia_k6_refinement_changes.py
 
+      - name: Analyze K6 refinement drivers
+        run: python experiments/real_data/georgia_gwr_baseline/analyze_georgia_k6_refinement_drivers.py
+
       - name: Show change summary
         run: |
           cat results/real_data/georgia_k6_unified_label_refinement/label_change_summary.json
           cat results/real_data/georgia_k6_unified_label_refinement/changed_transition_summary.csv
           cat results/real_data/georgia_k6_unified_label_refinement/regime_size_change.csv
+          cat results/real_data/georgia_k6_unified_label_refinement/refinement_driver_summary.json
+          cat results/real_data/georgia_k6_unified_label_refinement/r3_to_r4_driver_detail.csv
 
       - name: Persist visualization outputs
         run: |
@@ -47,7 +56,7 @@ jobs:
           if git diff --cached --quiet; then
             echo "No changes."
           else
-            git commit -m "test: store K6 refinement visualization [skip ci]"
+            git commit -m "test: store K6 refinement diagnostics [skip ci]"
             git fetch origin main
             git rebase origin/main
             git push origin HEAD:main
