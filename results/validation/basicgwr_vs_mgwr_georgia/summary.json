@@ -1,6 +1,13 @@
 {
   "n": 159,
-  "bandwidth": 117,
+  "external_selected_bandwidth": 117,
+  "basicgwr_selected_bandwidth": 117,
+  "bandwidths_identical": true,
+  "basicgwr_search_range": [
+    48,
+    159
+  ],
+  "basicgwr_search_best_aicc": 299.05080868302866,
   "parameter_shape": [
     159,
     4
@@ -16,12 +23,15 @@
   "rss_difference": -7.105427357601002e-15,
   "basicgwr_trace_hat": 11.804769716730094,
   "mgwr_gwr_trace_hat": 11.804769716730094,
+  "basicgwr_final_aicc": 299.0508086830287,
+  "mgwr_gwr_aicc": 299.0508086830288,
+  "aicc_difference": -5.684341886080802e-14,
   "max_abs_parameter_difference_by_term": {
     "Intercept": 1.942890293094024e-16,
     "PctFB": 5.551115123125783e-16,
     "PctBlack": 8.326672684688674e-17,
     "PctRural": 2.7755575615628914e-16
   },
-  "tolerance": 1e-08,
-  "passes_tolerance": true
+  "numerical_tolerance": 1e-12,
+  "passes_end_to_end_validation": true
 }
