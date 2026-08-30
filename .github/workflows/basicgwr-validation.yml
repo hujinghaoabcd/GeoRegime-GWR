@@ -7,6 +7,7 @@ on:
       - "src/georegime_gwr/gwr.py"
       - "src/georegime_gwr/bandwidth.py"
       - "experiments/validation/basicgwr_vs_mgwr_georgia.py"
+      - "experiments/spatial/build_georgia_queen_w.py"
       - "data/raw/georgia/**"
       - ".github/workflows/basicgwr-validation.yml"
   workflow_dispatch:
@@ -40,17 +41,22 @@ jobs:
       - name: Validate BasicGWR end to end
         run: python experiments/validation/basicgwr_vs_mgwr_georgia.py
 
+      - name: Build Georgia Queen adjacency
+        run: python experiments/spatial/build_georgia_queen_w.py
+
       - name: Show validation summary
-        run: cat results/validation/basicgwr_vs_mgwr_georgia/README.md
+        run: |
+          cat results/validation/basicgwr_vs_mgwr_georgia/README.md
+          cat results/spatial/georgia_queen_w/summary.json
 
       - name: Persist validation outputs
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -f results/validation/basicgwr_vs_mgwr_georgia
+          git add -f results/validation/basicgwr_vs_mgwr_georgia results/spatial/georgia_queen_w
           if git diff --cached --quiet; then
             echo "No validation changes to commit."
           else
-            git commit -m "test: store BasicGWR Georgia end-to-end validation [skip ci]"
+            git commit -m "test: store GWR validation and Georgia Queen W [skip ci]"
             git push
           fi
