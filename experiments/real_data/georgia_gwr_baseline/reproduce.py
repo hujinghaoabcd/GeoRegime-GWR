@@ -115,8 +115,12 @@ def fit_gwr(data_path: Path):
 
 
 def diagnostics(result) -> dict[str, float]:
+    # ``GWRResults.RSS`` in mgwr is a location-wise weighted RSS diagnostic.
+    # For the ordinary model-level residual sum of squares used in the
+    # canonical example, sum squared response residuals explicitly.
+    total_rss = float(np.sum(np.asarray(result.resid_response, dtype=float) ** 2))
     return {
-        "rss": _scalar(result.RSS),
+        "rss": total_rss,
         "enp": _scalar(result.ENP),
         "aic": float(result.aic),
         "aicc": float(result.aicc),
