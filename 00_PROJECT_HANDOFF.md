@@ -17,7 +17,7 @@
 
 ## 2. 最重要原则
 
-### 2.1 当前算法不是最终算法
+### 2.1 当前 GR-GWR 算法不是最终算法
 
 当前 `src/georegime_gwr/grgwr.py` 是从 pyGWRx 当前思路抽出的 **baseline snapshot**。后续完全允许：
 
@@ -28,6 +28,7 @@
 - 改写边界惩罚；
 - 改变 regime 数量选择；
 - 改变分区特征；
+- 改变 bandwidth policy；
 - 改变整个优化框架。
 
 不要因为代码已经存在就把它当作论文最终方法。
@@ -51,18 +52,16 @@
 - `docs/decisions/` 中新增 ADR
 - 如流程发生重大变化，更新本文
 
-## 3. 标准 GWR 基线已经固定
+## 3. 标准 GWR 基线：端到端验证已通过
 
-当前阶段暂时**不研究 MGWR**。
-
-虽然外部参考实现来自 Python 包 `mgwr`，但只使用：
+当前阶段**不研究 MGWR**。虽然外部参考来自 Python 包 `mgwr`，但只使用标准 GWR 的：
 
 - `mgwr.gwr.GWR`
 - `mgwr.sel_bw.Sel_BW`
 
-用途是建立可信的标准 GWR 外部基线，并验证仓库自己的 `BasicGWR`。
+它们只作为外部验证 oracle。仓库自己的 `BasicGWR` 已经能够独立完成自动带宽搜索和 GWR 拟合。
 
-### 3.1 Canonical Georgia standard-GWR benchmark
+### 3.1 Canonical Georgia benchmark
 
 固定规格：
 
@@ -75,11 +74,11 @@
 - AICc bandwidth selection；
 - standard GWR only。
 
-使用 `mgwr==2.2.1` 的 `mgwr.gwr.GWR` 已在线复现：
+Canonical `mgwr==2.2.1` 结果：
 
 - bandwidth = 117；
 - RSS = 51.186192；
-- ENP = 11.804770；
+- ENP/trace(S) = 11.804770；
 - AIC = 296.615923；
 - AICc = 299.050809；
 - BIC = 335.912535；
@@ -88,21 +87,19 @@
 
 特别注意：`mgwr.GWRResults.RSS` 是 location-wise weighted RSS diagnostic；本项目中的模型级总 RSS 固定使用 `sum(resid_response**2)`。
 
-### 3.2 Repository BasicGWR validation — PASSED
+### 3.2 Repository BasicGWR end-to-end validation — PASSED
 
-仓库内 `src/georegime_gwr/gwr.py::BasicGWR` 已用相同 Georgia 数据、相同标准化、相同 adaptive bisquare bandwidth=117，与 `mgwr.gwr.GWR` 逐点比较。
+现在验证不是“手工给 bandwidth=117 再拟合”，而是：
 
-比较范围：
+`BasicGWR(bandwidth="auto")`
 
-- 159 × 4 local parameters；
-- 159 fitted values；
-- 159 residuals；
-- 完整 159 × 159 hat matrix；
-- RSS；
-- trace(S)。
+自己搜索带宽，再拟合。
 
 结果：
 
+- external `mgwr.sel_bw.Sel_BW` bandwidth = `117`；
+- repository BasicGWR bandwidth = `117`；
+- bandwidth 完全一致；
 - max absolute parameter difference = `5.551115123125783e-16`；
 - RMSE parameter difference = `9.131398707249937e-17`；
 - max absolute fitted difference = `5.551115123125783e-16`；
@@ -111,24 +108,70 @@
 - BasicGWR RSS = `51.186191553463985`；
 - mgwr.GWR RSS = `51.18619155346399`；
 - trace(S) 两者均为 `11.804769716730094`；
-- tolerance `1e-8` = **PASS**。
+- BasicGWR AICc = `299.0508086830287`；
+- mgwr.GWR AICc = `299.0508086830288`；
+- tolerance `1e-12` end-to-end validation = **PASS**。
 
-结论：差异只有浮点机器精度量级。当前 `BasicGWR` 的标准 Gaussian adaptive-bisquare GWR 核心计算已经可信，可以作为后续 GR-GWR 研究的基础 GWR 引擎。
+因此标准 GWR 的**自动选带宽 + 最终局部回归**都已经可信。
 
 关键文件：
 
+- `src/georegime_gwr/gwr.py`
+- `src/georegime_gwr/bandwidth.py`
 - `data/raw/georgia/GData_utm.csv`
 - `data/raw/georgia/G_utm.*`
 - `experiments/real_data/georgia_gwr_baseline/reproduce.py`
-- `results/reproduction/georgia_gwr_baseline/summary.json`
 - `experiments/validation/basicgwr_vs_mgwr_georgia.py`
+- `results/reproduction/georgia_gwr_baseline/summary.json`
 - `results/validation/basicgwr_vs_mgwr_georgia/summary.json`
 - `results/validation/basicgwr_vs_mgwr_georgia/pointwise_comparison.csv`
+- `results/validation/basicgwr_vs_mgwr_georgia/basicgwr_bandwidth_search_curve.csv`
 - `.github/workflows/basicgwr-validation.yml`
 
-旧的 Georgia GWR/MGWR 联合复现实验已从当前主分支移除，避免后续研究混入 MGWR。
+## 4. 极重要：两种 bandwidth search policy 不同
 
-## 4. 当前 GR-GWR baseline 流程
+后续新对话必须保留这个事实，不得重新误判。
+
+### 4.1 Current PyGWRx policy
+
+当前 pyGWRx 的 adaptive AICc selector 对合法整数 bandwidth 做**穷举扫描**，取完整候选曲线中的最低 AICc。
+
+在 canonical Georgia 数据上：
+
+- exhaustive PyGWRx-style global minimum = `k=116`；
+- AICc 约 `298.9856`。
+
+### 4.2 Canonical mgwr 2.2.1 policy
+
+`mgwr==2.2.1` 默认使用**离散 golden-section search**，不是完整整数穷举。
+
+在同一 Georgia 数据上返回：
+
+- `k=117`；
+- AICc = `299.0508086830288`。
+
+所以 `116` 与 `117` 的差异来自**搜索算法**，不是 GWR 回归核心实现错误。
+
+### 4.3 Repository decision
+
+仓库同时保留：
+
+- `PyGWRxAdaptiveAICcSelector`：忠实保留 current PyGWRx exhaustive policy；
+- `MGWRCompatibleAICcSelector`：本地实现 canonical `mgwr==2.2.1` discrete golden-section policy。
+
+当前：
+
+`BasicGWR(bandwidth="auto")`
+
+使用 `MGWRCompatibleAICcSelector`，因为当前 canonical baseline 的目标是**完整复现论文/官方标准 GWR 实验，包括自动选择 117**。
+
+正式决策：
+
+`docs/decisions/ADR-0003-standard-gwr-bandwidth-search-policy.md`
+
+后续若 GR-GWR 论文主实验选择 exhaustive search，应把它作为新的方法选择明确记录，不能悄悄把 116/117 混为一谈。
+
+## 5. 当前 GR-GWR baseline 流程
 
 当前 baseline 仍忠于 pyGWRx 的主要执行顺序：
 
@@ -142,29 +185,30 @@
 8. 以 `RSS + lambda * graph-cut boundary count` 做整轮 objective guard；
 9. 最终按稳定 regime 重新拟合每个位置的局部系数。
 
-## 5. 当前已经识别的高优先级研究问题
+## 6. 当前高优先级研究问题
 
 ### Q1. 空间邻接结构 W
-当前代码固定从点坐标构造 `kNN + MST`。但对于 polygon 数据，GIS 中已有 Queen/Rook contiguity；理论上 GR-GWR 更适合直接定义一个标准空间邻接矩阵 `W`，而不是把 kNN+MST 写死为模型定义。
-
-**当前状态：标准 GWR 已验证通过，可以开始正式研究这一问题。**
+当前代码固定从点坐标构造 `kNN + MST`。对于 polygon 数据，理论上 GR-GWR 更适合直接定义标准空间邻接矩阵 `W`，polygon 可用 Queen/Rook；point data 可用 kNN/Delaunay/distance graph。
 
 ### Q2. 坐标是否应进入聚类特征
-当前同时存在坐标进入 clustering feature 与 adjacency/connectivity 空间约束，可能重复，需要消融验证。
+当前同时存在 coordinates-in-features 与 adjacency/connectivity 约束，可能重复，需要消融。
 
 ### Q3. ICM 是否必要
-当前 ICM 让 regime-restricted GWR 的拟合结果反向修正 regime，但会增加算法复杂度。需要比较无 refinement 与当前 ICM refinement。
+需要比较无 refinement 与 ICM refinement；若收益很小，倾向简化。
 
-### Q4. 第一轮 GWR 系数是否会被真实边界平滑污染
-当前用普通 GWR 局部系数发现 regime，而普通 GWR 本身可能跨真实边界借样本。必须通过 sharp-boundary simulation 验证。
+### Q4. 第一轮 GWR 系数是否被真实边界平滑污染
+必须用 sharp-boundary synthetic DGP 验证。
 
 ### Q5. shared regime 假设
-当前所有局部斜率共同产生一套 regime map。不同 covariates 可能具有不同边界，需要 shared-boundary 与 conflicting-boundary DGP 对比。
+不同 covariates 可能具有不同边界，需要 shared-boundary 与 conflicting-boundary DGP。
 
 ### Q6. graph-cut penalty 的解释
-当前 `B(z) = number of adjacency edges crossing regimes`。它是 graph-cut penalty，不是真实几何边界长度。
+`B(z) = number of adjacency edges crossing regimes` 是 graph-cut penalty，不是真实几何边界长度。
 
-## 6. 文献定位（当前阶段结论）
+### Q7. GR-GWR 最终 bandwidth policy
+标准 GWR canonical reproduction 已固定为 mgwr-compatible golden search，但 GR-GWR 正式论文算法究竟采用 benchmark-compatible search 还是 exhaustive AICc global minimum，仍未冻结。
+
+## 7. 文献定位（当前阶段结论）
 
 已经确认：
 
@@ -174,9 +218,9 @@
 - boundary-aware GWR / multiscale spatially varying coefficient 相关研究已有先例；
 - 当前尚未找到与“GWR local relationships -> endogenous contiguous regime -> regime-gated GWR -> LOO-guided iterative regime refinement”完全同构的方法。
 
-论文中的首创性声明必须使用谨慎措辞，例如 `To the best of our knowledge`，并把创新限定在完整耦合框架，而不是单个已有组件。
+首创性声明必须谨慎，例如 `To the best of our knowledge`，并限定在完整耦合框架，而不是单个已有组件。
 
-## 7. 新对话恢复顺序
+## 8. 新对话恢复顺序
 
 按以下顺序读取：
 
@@ -186,19 +230,20 @@
 4. `docs/design/GRGWR_BASELINE_SPEC.md`
 5. `docs/design/RESEARCH_QUESTIONS.md`
 6. `docs/experiments/EXPERIMENT_PLAN.md`
-7. `docs/decisions/` 最新 ADR
+7. `docs/decisions/` 最新 ADR，当前至少读 `ADR-0003-standard-gwr-bandwidth-search-policy.md`
 8. 当前源码与 tests
 
-如果文档互相冲突：
+如果文档冲突：
 
 `最新 ADR > CURRENT_STATUS > 当前正式设计规范 > 本交接文档中的旧描述 > README`
 
-## 8. 当前下一步
+## 9. 当前下一步
 
-标准 GWR 基线已经验证完成，不需要继续修 BasicGWR 核心计算。下一阶段：
+标准 GWR 已完成端到端验证，不需要继续修基础 GWR。下一阶段：
 
 1. 建立最基础 synthetic DGP；
 2. 研究是否把 `W` 从固定 kNN+MST 构造结果提升为显式模型输入；
-3. 对 Queen/Rook、kNN、kNN+MST 做比较；
+3. 比较 Queen/Rook、kNN、kNN+MST；
 4. 对 coordinates-in-features、Ward、ICM 做逐组件消融；
-5. 再决定 GR-GWR v1 paper algorithm。
+5. 单独决定 GR-GWR 正式 bandwidth policy；
+6. 再冻结 GR-GWR v1 paper algorithm。
