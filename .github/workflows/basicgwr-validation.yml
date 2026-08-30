@@ -8,6 +8,7 @@ on:
       - "src/georegime_gwr/bandwidth.py"
       - "experiments/validation/basicgwr_vs_mgwr_georgia.py"
       - "experiments/spatial/build_georgia_queen_w.py"
+      - "experiments/spatial/plot_georgia_spatial_structure.py"
       - "data/raw/georgia/**"
       - ".github/workflows/basicgwr-validation.yml"
   workflow_dispatch:
@@ -35,6 +36,7 @@ jobs:
             "numpy==1.26.4" \
             "scipy==1.11.4" \
             "pandas==2.2.3" \
+            "matplotlib==3.8.4" \
             "libpysal==4.10.0" \
             "mgwr==2.2.1"
 
@@ -44,10 +46,14 @@ jobs:
       - name: Build Georgia Queen adjacency
         run: python experiments/spatial/build_georgia_queen_w.py
 
+      - name: Plot Georgia spatial structure
+        run: python experiments/spatial/plot_georgia_spatial_structure.py
+
       - name: Show validation summary
         run: |
           cat results/validation/basicgwr_vs_mgwr_georgia/README.md
           cat results/spatial/georgia_queen_w/summary.json
+          ls -lh results/spatial/georgia_queen_w/*.png results/spatial/georgia_queen_w/*.svg
 
       - name: Persist validation outputs
         run: |
@@ -57,6 +63,6 @@ jobs:
           if git diff --cached --quiet; then
             echo "No validation changes to commit."
           else
-            git commit -m "test: store GWR validation and Georgia Queen W [skip ci]"
+            git commit -m "test: store GWR validation, Queen W, and Georgia maps [skip ci]"
             git push
           fi
