@@ -5,6 +5,8 @@ on:
     branches: [main]
     paths:
       - "src/georegime_gwr/gwr.py"
+      - "src/georegime_gwr/regime_gwr.py"
+      - "src/georegime_gwr/__init__.py"
       - "src/georegime_gwr/bandwidth.py"
       - "experiments/validation/basicgwr_vs_mgwr_georgia.py"
       - "experiments/spatial/build_georgia_queen_w.py"
