@@ -1,0 +1,27 @@
+{
+  "n": 159,
+  "bandwidth": 117,
+  "parameter_shape": [
+    159,
+    4
+  ],
+  "max_abs_parameter_difference": 5.551115123125783e-16,
+  "rmse_parameter_difference": 9.131398707249937e-17,
+  "max_abs_fitted_difference": 5.551115123125783e-16,
+  "rmse_fitted_difference": 1.3385968826711347e-16,
+  "max_abs_residual_difference": 5.551115123125783e-16,
+  "max_abs_hat_matrix_difference": 5.551115123125783e-17,
+  "basicgwr_rss": 51.186191553463985,
+  "mgwr_gwr_rss": 51.18619155346399,
+  "rss_difference": -7.105427357601002e-15,
+  "basicgwr_trace_hat": 11.804769716730094,
+  "mgwr_gwr_trace_hat": 11.804769716730094,
+  "max_abs_parameter_difference_by_term": {
+    "Intercept": 1.942890293094024e-16,
+    "PctFB": 5.551115123125783e-16,
+    "PctBlack": 8.326672684688674e-17,
+    "PctRural": 2.7755575615628914e-16
+  },
+  "tolerance": 1e-08,
+  "passes_tolerance": true
+}
