@@ -14,7 +14,7 @@ from numbers import Integral
 import numpy as np
 from scipy.spatial.distance import cdist
 
-from .bandwidth import AdaptiveAICcSelector
+from .bandwidth import MGWRCompatibleAICcSelector
 
 
 @dataclass
@@ -32,7 +32,8 @@ class BasicGWR:
     ----------
     bandwidth : int, float, or "auto"
         Integer = adaptive neighbour-order bandwidth; float = fixed distance;
-        ``"auto"`` = adaptive AICc search using the PyGWRx search policy.
+        ``"auto"`` = adaptive AICc search reproducing the standard-GWR search
+        behavior of ``mgwr==2.2.1`` used by the canonical Georgia benchmark.
     kernel : {"bisquare", "gaussian", "exponential"}
     fit_intercept : bool
 
@@ -63,8 +64,7 @@ class BasicGWR:
             if bw <= 1e-12:
                 positive = distances[distances > 1e-12]
                 bw = float(np.min(positive)) if positive.size else 1.0
-            # Keep the final-fit convention already validated exactly against
-            # mgwr.gwr.GWR on the Georgia benchmark.
+            # mgwr 2.2.1 compact-kernel boundary convention.
             bw *= 1.0000001
         else:
             bw = float(bandwidth)
@@ -118,7 +118,7 @@ class BasicGWR:
         Xd = np.column_stack([np.ones(X.shape[0]), X]) if self.fit_intercept else X.copy()
 
         if isinstance(self.bandwidth, str) and self.bandwidth.lower() == "auto":
-            selector = AdaptiveAICcSelector(kernel=self.kernel)
+            selector = MGWRCompatibleAICcSelector(kernel=self.kernel)
             search = selector.select(Xd, y, coords)
             self.bandwidth_selector_ = selector
             self.bandwidth_search_ = search
