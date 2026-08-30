@@ -1,0 +1,3 @@
+model,fit_structure,rss,rmse,mae,r2,trace_hat,aicc_fixed_partition
+unified_regime_local_adaptive_gwr,one 159-county fit; within-regime adaptive distance; k_i=regime size,43.10007063605059,0.5206434736379855,0.344973308161647,0.7289303733581725,39.70185564133625,354.0114746822055
+six_independent_regime_gwr,six separate BasicGWR fits; each selected bandwidth=regime size,43.100070636050596,0.5206434736379855,0.34497330816164706,0.7289303733581723,39.70185564133625,354.0114746822055
