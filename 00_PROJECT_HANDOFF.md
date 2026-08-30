@@ -47,11 +47,11 @@
 - `docs/decisions/` 新增或更新 ADR
 - 若影响整体流程，更新本文
 
-## 3. 标准 GWR 基线
+## 3. 标准 GWR 基线 — 已验证完成
 
-当前阶段只研究 **standard GWR**，不运行 MGWR 模型。
+当前基础验证只研究 **standard GWR**，不运行 MGWR 模型。
 
-外部 `mgwr==2.2.1` 只作为验证 oracle，允许使用：
+外部 `mgwr==2.2.1` 只作为验证 oracle，使用：
 
 - `mgwr.gwr.GWR`
 - `mgwr.sel_bw.Sel_BW`
@@ -76,9 +76,11 @@ External canonical result：
 
 给定相同 `k=117` 时，仓库 `BasicGWR` 与 external `mgwr.gwr.GWR` 的局部系数、拟合值、残差和 hat matrix 已验证到机器精度一致。
 
+普通测试 CI 已在 Python 3.10 / 3.12 通过；Georgia 自动带宽端到端 CI 也已通过。
+
 ## 4. 极重要：BasicGWR 有三种明确 bandwidth search policy
 
-**不要再把 116 与 117 当成实现错误，也不要把 compatibility mode 当成默认研究策略。**
+**不要把 116 与 117 当成实现错误，也不要把 compatibility mode 当成默认研究策略。**
 
 正式依据：`docs/decisions/ADR-0003-standard-gwr-bandwidth-search-policy.md`。
 
@@ -88,17 +90,16 @@ External canonical result：
 BasicGWR(bandwidth="auto")
 ```
 
-默认 adaptive，并使用：
+默认 adaptive，使用：
 
 `PyGWRxAdaptiveAICcSelector`
 
-它穷举合法整数邻居数并取 AICc 最低值。
+Georgia 实际验证：
 
-Georgia：
-
+- search range = 8–159；
 - selected `k = 116`；
-- AICc ≈ 298.9856；
-- 这是论文研究中标准 GWR baseline 的默认策略。
+- AICc = `298.9855995813665`；
+- 这是论文研究中标准 GWR baseline 的默认 adaptive 策略。
 
 ### 4.2 Fixed-distance research default — golden section
 
@@ -130,15 +131,18 @@ BasicGWR(
 
 复现 `mgwr==2.2.1` 的离散 golden-section search 和 compact-kernel boundary semantics。
 
-Georgia：
+Georgia 实际验证：
 
-- expected `k = 117`；
+- search range = 48–159；
+- selected `k = 117`；
+- AICc = `299.0508086830287`；
+- external mgwr AICc = `299.05080868302883`；
 - 用于复现论文/官方示例；
 - **不是默认研究模式。**
 
 ### 4.4 Why 116 vs 117?
 
-Current PyGWRx adaptive exhaustive search 会访问所有整数候选，因此 Georgia 上找到完整离散 AICc 曲线的最低点 `116`。
+Current PyGWRx adaptive exhaustive search 会访问所有整数候选，因此 Georgia 上找到完整离散 AICc 曲线最低点 `116`。
 
 Historical mgwr 2.2.1 默认采用 rounded discrete golden-section，只访问部分候选并返回 `117`。
 
@@ -147,19 +151,27 @@ Historical mgwr 2.2.1 默认采用 rounded discrete golden-section，只访问�
 - 116 vs 117 = search algorithm difference；
 - 不是 standard GWR local WLS implementation difference。
 
-## 5. Georgia automatic-search validation contract
+## 5. Georgia automatic-search validation — PASSED
 
-`experiments/validation/basicgwr_vs_mgwr_georgia.py` 必须同时验证：
+`experiments/validation/basicgwr_vs_mgwr_georgia.py` 已实际验证：
 
-1. external mgwr search = 117；
-2. repository research default exhaustive = 116；
-3. repository explicit `mgwr_golden` = 117；
-4. compatibility-mode final fit 与 external `mgwr.gwr.GWR` 在 `1e-12` 内一致；
-5. exhaustive 116 AICc < compatibility 117 AICc。
+1. external mgwr search = **117**；
+2. repository research default exhaustive = **116**；
+3. repository explicit `mgwr_golden` = **117**；
+4. compatibility-mode 117 与 external `mgwr.gwr.GWR`：
+   - max local-parameter difference = `9.99e-16`；
+   - max fitted-value difference = `2.66e-15`；
+   - max hat-matrix difference = `5.55e-17`；
+   - RSS difference = `-7.11e-15`；
+   - AICc difference = `-1.14e-13`；
+5. exhaustive 116 AICc < compatibility 117 AICc；
+6. `passes_validation = true`。
 
-证据目录：
+证据：
 
-- `results/validation/basicgwr_vs_mgwr_georgia/`
+- `results/validation/basicgwr_vs_mgwr_georgia/summary.json`
+- `results/validation/basicgwr_vs_mgwr_georgia/strict_exhaustive_bandwidth_curve.csv`
+- `results/validation/basicgwr_vs_mgwr_georgia/mgwr_compatible_search_trace.csv`
 - `.github/workflows/basicgwr-validation.yml`
 
 ## 6. 当前 GR-GWR baseline 流程
@@ -216,10 +228,12 @@ Historical mgwr 2.2.1 默认采用 rounded discrete golden-section，只访问�
 
 ## 9. 当前下一步
 
-先确认三模式 Georgia GWR CI 通过。通过后，不再继续修改基础 GWR，进入 GR-GWR 组件研究：
+**基础 GWR 阶段已经结束，不要再从头复核。**
 
-1. 建立 globally smooth / piecewise constant / within-regime smooth + between-regime jump DGP；
-2. 把 `W` 作为第一优先级设计问题；
+现在进入 GR-GWR 组件研究：
+
+1. 第一优先级：把 `W` 作为显式空间结构重新设计，明确它与距离矩阵 `D` 的不同职责；
+2. 建立 globally smooth / piecewise constant / within-regime smooth + between-regime jump DGP；
 3. 比较 Queen/Rook、kNN、kNN+MST；
 4. 再做 coordinates、Ward、ICM 等消融；
-5. 最终依据实验和理论冻结 GR-GWR v1 paper algorithm。
+5. 最终依据理论和实验冻结 GR-GWR v1 paper algorithm。
