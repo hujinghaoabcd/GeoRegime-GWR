@@ -1,0 +1,19 @@
+{
+  "status": "exploratory_lambda_sensitivity_only",
+  "lambda_grid": [
+    0.0,
+    0.005,
+    0.01,
+    0.02,
+    0.05,
+    0.1,
+    0.2,
+    0.5,
+    1.0
+  ],
+  "initial_R3_n": 17,
+  "initial_boundary_edges": 102,
+  "initial_rmse": 0.5206434736379855,
+  "minimum_regime_size": 6,
+  "note": "Same initial K=6 partition and same refinement algorithm for every lambda. This diagnoses penalty sensitivity; it does not select a final lambda."
+}
