@@ -1,0 +1,41 @@
+{
+  "status": "exploratory_fixed_k6_model_form_comparison",
+  "K": 6,
+  "labels_fixed": true,
+  "partition_selection_complexity_accounted_for": false,
+  "standardization": "global X/y z-score, ddof=0",
+  "ordinary_gwr_bandwidth": 116,
+  "regime_gwr_bandwidths": {
+    "1": 53,
+    "2": 19,
+    "3": 17,
+    "4": 22,
+    "5": 27,
+    "6": 21
+  },
+  "ordinary_gwr": {
+    "rss": 51.08290055685607,
+    "rmse": 0.5668122300472797,
+    "mae": 0.399432936791771,
+    "r2": 0.6787238958688298,
+    "trace_hat": 11.912091033737674,
+    "aicc_fixed_partition": 298.9855995813665
+  },
+  "k6_regime_restricted_gwr": {
+    "rss": 43.10007063605059,
+    "rmse": 0.5206434736379854,
+    "mae": 0.344973308161647,
+    "r2": 0.7289303733581725,
+    "trace_hat": 39.70185564133625,
+    "aicc_fixed_partition": 354.0114746822055
+  },
+  "k6_regime_ols": {
+    "rss": 49.00829440037317,
+    "rmse": 0.5551830929243196,
+    "mae": 0.3760641695363323,
+    "r2": 0.6917717333309863,
+    "trace_hat": 24.0,
+    "aicc_fixed_partition": 323.8674611010308
+  },
+  "interpretation_guard": "AICc values treat the K6 partition as fixed and therefore omit the complexity of discovering labels from y. Use only as an exploratory conditional comparison."
+}
