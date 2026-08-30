@@ -1,0 +1,53 @@
+{
+  "status": "exploratory_existing_algorithm_unified_refinement",
+  "K": 6,
+  "n_counties": 159,
+  "lambda_boundary": 1.0,
+  "minimum_regime_size": 6,
+  "max_iter": 20,
+  "random_state": 42,
+  "refit_model": "RegimeAwareGWR(bandwidth='regime_size', kernel='bisquare')",
+  "candidate_labels": "current label plus Queen-neighbor labels",
+  "candidate_prediction_cost": "leave-one-out squared error under candidate regime",
+  "connectivity_guard": true,
+  "global_objective": "RSS + lambda * Queen boundary-edge count",
+  "initial": {
+    "regime_sizes": {
+      "1": 53,
+      "2": 19,
+      "3": 17,
+      "4": 22,
+      "5": 27,
+      "6": 21
+    },
+    "boundary_edges": 102,
+    "rss": 43.10007063605059,
+    "rmse": 0.5206434736379855,
+    "mae": 0.344973308161647,
+    "r2": 0.7289303733581725,
+    "trace_hat": 39.70185564133625,
+    "objective": 145.1000706360506
+  },
+  "final": {
+    "regime_sizes": {
+      "1": 62,
+      "2": 19,
+      "3": 6,
+      "4": 38,
+      "5": 17,
+      "6": 17
+    },
+    "boundary_edges": 72,
+    "rss": 41.20062506751219,
+    "rmse": 0.5090416761892498,
+    "mae": 0.3256551225379652,
+    "r2": 0.740876571902439,
+    "trace_hat": 40.6905596659233,
+    "objective": 113.20062506751219,
+    "counties_changed_from_initial": 35,
+    "all_regimes_connected": true
+  },
+  "accepted_refinement_iterations": 8,
+  "stop_reason": "no_label_changes",
+  "warning": "This deliberately follows the existing exploratory ICM/objective baseline. lambda=1.0, complexity control, bandwidth policy, and the refinement objective are not frozen."
+}
