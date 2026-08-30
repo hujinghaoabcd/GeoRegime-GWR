@@ -115,7 +115,7 @@ WCSS = within-cluster sum of squares，只衡量当前 fingerprint space 中各 
 - 证明分区具有真实机制意义；
 - 替代完整 GR-GWR 的 out-of-sample validation。
 
-## 7. 当前 Georgia 探索性证据
+## 7. 当前 Georgia 初始分区证据
 
 当前 experimental specification：
 
@@ -135,19 +135,72 @@ WCSS = within-cluster sum of squares，只衡量当前 fingerprint space 中各 
 - K=6: WCSS 41.1763；regime sizes = 53, 19, 17, 22, 27, 21；
 - K=7: WCSS 36.4078，并开始出现 size=7 的较小 regime。
 
-因此下一步只把 **K=6 当作 exploratory working candidate** 单独检查，不将其写成最终选择。
+因此 **K=6 只作为 exploratory working candidate**，不将其写成最终选择。
 
-## 8. 接下来的工作顺序
+## 8. K=6 分区内重新 GWR：第一轮探索结果
 
-当前先做：
+已经完成最简单的 fixed-label experiment：
 
-1. 单独展开 K=6 的地图、各 regime 样本量与 coefficient fingerprint 特征；
-2. 看 K=6 是否存在明显不自然形状、狭长连接、局部碎片或系数内部不一致；
-3. 暂时不执行 boundary-aware refit，先把初始分区本身看清楚。
+`ordinary GWR -> fixed K=6 Ward regimes -> each regime fits its own BasicGWR`
 
-随后再回到上述未解决问题，尤其是：
+本轮严格不做：
+
+- label refinement；
+- ICM；
+- boundary penalty；
+- regime reassignment；
+- iterative repartition。
+
+跨 regime 的观测在局部拟合中完全不可借用，即 cross-regime weights = 0。
+
+为了先看结果，本轮每个 regime **独立使用 adaptive exhaustive AICc 自动选择 bandwidth**。这只是实验规格，不是最终 GR-GWR bandwidth policy。
+
+关键发现：6 个 regime 的自动带宽全部等于各自 regime 的样本量：
+
+- R1: n=53, bw=53；
+- R2: n=19, bw=19；
+- R3: n=17, bw=17；
+- R4: n=22, bw=22；
+- R5: n=27, bw=27；
+- R6: n=21, bw=21。
+
+这意味着在当前真实数据和当前 K=6 划分下，AICc 在每个区内部都倾向于使用尽可能大的局部邻域，而不是更局部的小 bandwidth。这个现象必须后续专门解释。
+
+总体 in-sample 对比：
+
+- ordinary GWR: RSS=51.0829, RMSE=0.5668, MAE=0.3994, R2=0.6787, trace(S)=11.9121, AICc=298.9856；
+- K=6 restricted GWR: RSS=43.1001, RMSE=0.5206, MAE=0.3450, R2=0.7289, trace(S)=39.7019, AICc=354.0115。
+
+因此当前结果是：
+
+- 分区限制后 in-sample 拟合误差明显下降；
+- 但有效复杂度 trace(S) 大幅上升；
+- 按当前整体 Gaussian GWR AICc 计算，AICc 反而显著变差（+55.03）。
+
+这说明“分区后误差下降”本身不能证明模型更好，也进一步说明最终必须使用更严格的 complexity / spatial CV 证据。
+
+### 新增待解决问题：GR-GWR bandwidth 到底怎么定义？
+
+后续必须比较至少：
+
+1. 每个 regime 独立选择 adaptive bandwidth；
+2. 所有 regime 共用一个 bandwidth，但禁止跨边界借样本；
+3. 使用全局 distance bandwidth 再做 regime masking；
+4. 对 regime size / effective degrees of freedom 加更明确的限制；
+5. 用 spatial CV 而不是纯 in-sample AICc 选择 bandwidth。
+
+尤其要回答：当自动带宽总是顶到 regime size 上限时，GR-GWR 是否实际上更接近“分区内空间加权回归 / 接近区域回归”，以及这是否符合模型设计目标。
+
+## 9. 接下来的工作顺序
+
+当前已有两层结果：初始 K=6 分区，以及固定 K=6 的最简单 regime-restricted GWR。
+
+下一阶段再逐项研究：
 
 - pilot GWR boundary smoothing；
 - K selection；
+- per-regime vs shared bandwidth；
 - Ward 是否只是 initializer；
-- 后续是否需要 regime-restricted refit + iterative label refinement。
+- 是否需要 regime-restricted refit + iterative label refinement；
+- 如何控制因分区导致的有效复杂度增长；
+- spatial / blocked CV 是否支持真实泛化改善。
