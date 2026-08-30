@@ -1,0 +1,36 @@
+{
+  "status": "diagnostic_only_current_exploratory_refinement",
+  "lambda_boundary": 1.0,
+  "final_changed_counties": 35,
+  "decisive_move_driver_counts": {
+    "regression_only": 14,
+    "boundary_overcame_worse_or_equal_LOO": 10,
+    "joint_regression_and_boundary": 9,
+    "regression_overcame_boundary_cost": 2
+  },
+  "regression_supported_count": 25,
+  "boundary_supported_count": 19,
+  "both_regression_and_boundary_supported_count": 9,
+  "count_with_multiple_accepted_moves": 2,
+  "mean_loo_error_gain": 0.20905215681553338,
+  "median_loo_error_gain": 0.016321347140863585,
+  "mean_boundary_gain": 0.7428571428571429,
+  "mean_total_local_cost_gain": 0.9519092996726761,
+  "r3_to_r4": {
+    "count": 11,
+    "regression_supported_count": 7,
+    "boundary_supported_count": 6,
+    "both_supported_count": 2,
+    "driver_counts": {
+      "boundary_overcame_worse_or_equal_LOO": 4,
+      "regression_only": 3,
+      "joint_regression_and_boundary": 2,
+      "regression_overcame_boundary_cost": 2
+    },
+    "mean_loo_error_gain": 0.3427554688037026,
+    "median_loo_error_gain": 0.0133637904200383,
+    "mean_boundary_gain": 0.6363636363636364,
+    "mean_total_local_cost_gain": 0.9791191051673387
+  },
+  "interpretation_note": "Driver labels refer to the decisive last accepted local move into the final regime. They do not prove causal geographic mechanisms and do not validate lambda=1.0."
+}
