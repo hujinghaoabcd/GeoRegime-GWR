@@ -14,6 +14,7 @@ on:
       - "experiments/spatial/inspect_georgia_k6_initial_regimes.py"
       - "experiments/real_data/georgia_gwr_baseline/plot_variable_spatial_distributions.py"
       - "experiments/real_data/georgia_gwr_baseline/plot_basicgwr_local_coefficients.py"
+      - "experiments/real_data/georgia_gwr_baseline/run_georgia_k6_regime_restricted_gwr.py"
       - "data/raw/georgia/**"
       - ".github/workflows/basicgwr-validation.yml"
   workflow_dispatch:
@@ -70,6 +71,9 @@ jobs:
       - name: Inspect exploratory Georgia K6 partition
         run: python experiments/spatial/inspect_georgia_k6_initial_regimes.py
 
+      - name: Run exploratory K6 regime-restricted GWR
+        run: python experiments/real_data/georgia_gwr_baseline/run_georgia_k6_regime_restricted_gwr.py
+
       - name: Show validation summary
         run: |
           cat results/validation/basicgwr_vs_mgwr_georgia/README.md
@@ -79,11 +83,15 @@ jobs:
           cat results/spatial/georgia_initial_ward_regimes/ward_partition_diagnostics.csv
           cat results/spatial/georgia_initial_ward_regimes/k6_focus/summary.json
           cat results/spatial/georgia_initial_ward_regimes/k6_focus/k6_regime_summary.csv
+          cat results/real_data/georgia_k6_regime_restricted_gwr/summary.json
+          cat results/real_data/georgia_k6_regime_restricted_gwr/regime_gwr_summary.csv
+          cat results/real_data/georgia_k6_regime_restricted_gwr/model_comparison.csv
           ls -lh results/spatial/georgia_queen_w/*.png results/spatial/georgia_queen_w/*.svg
           ls -lh results/spatial/georgia_local_relationship_edges/*.png results/spatial/georgia_local_relationship_edges/*.svg
           ls -lh results/spatial/georgia_initial_ward_regimes/*.png results/spatial/georgia_initial_ward_regimes/*.svg
           ls -lh results/spatial/georgia_initial_ward_regimes/k6_focus/*.png results/spatial/georgia_initial_ward_regimes/k6_focus/*.svg
           ls -lh results/real_data/georgia_gwr_baseline/*.png results/real_data/georgia_gwr_baseline/*.svg
+          ls -lh results/real_data/georgia_k6_regime_restricted_gwr/*.png results/real_data/georgia_k6_regime_restricted_gwr/*.svg
           cat results/real_data/georgia_gwr_baseline/basicgwr_local_coefficients_summary.csv
 
       - name: Persist validation outputs
@@ -95,7 +103,8 @@ jobs:
             results/spatial/georgia_queen_w \
             results/spatial/georgia_local_relationship_edges \
             results/spatial/georgia_initial_ward_regimes \
-            results/real_data/georgia_gwr_baseline
+            results/real_data/georgia_gwr_baseline \
+            results/real_data/georgia_k6_regime_restricted_gwr
           if git diff --cached --quiet; then
             echo "No validation changes to commit."
           else
