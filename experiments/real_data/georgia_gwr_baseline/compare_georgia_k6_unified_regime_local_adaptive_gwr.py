@@ -1,14 +1,14 @@
-"""Test one unified K=6 regime-aware GWR using regime-local adaptive neighborhoods.
+"""Validate the reusable unified K=6 regime-aware GWR refit baseline.
 
-All 159 Georgia counties are fitted in one pass. For focal county i, the
+All 159 Georgia counties are fitted in one model. For focal county i, the
 adaptive distance scale is defined only from observations in i's own regime:
 
     w_ij = K(d_ij / b_i) * I(z_i == z_j)
 
-For this first equivalence experiment, k_i equals the size of i's regime.
-Because the current six independent regime GWR fits all selected their regime
-size as the optimal adaptive bandwidth, this unified formulation should
-numerically reproduce them if the weight geometry is truly equivalent.
+The current Georgia baseline uses k_i equal to the size of i's regime. Because
+the previous six independent regime GWR fits all selected their regime size as
+the optimal adaptive bandwidth, the reusable unified implementation must
+reproduce them to machine precision.
 """
 
 from __future__ import annotations
@@ -19,14 +19,13 @@ import sys
 
 import numpy as np
 import pandas as pd
-from scipy.spatial.distance import cdist
 
 ROOT = Path(__file__).resolve().parents[3]
 SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from georegime_gwr.gwr import BasicGWR
+from georegime_gwr import RegimeAwareGWR
 
 DATA = ROOT / "data" / "raw" / "georgia" / "GData_utm.csv"
 LABELS = ROOT / "results" / "spatial" / "georgia_initial_ward_regimes" / "initial_regime_labels_k2_k15.csv"
@@ -75,55 +74,6 @@ def _metrics(y: np.ndarray, fitted: np.ndarray, hat: np.ndarray) -> dict[str, fl
     }
 
 
-def _regime_local_weights(
-    distances_i: np.ndarray,
-    same_regime: np.ndarray,
-    k_within_regime: int,
-) -> np.ndarray:
-    """Adaptive bisquare scale determined only by same-regime distances."""
-    d_same = distances_i[same_regime]
-    k = min(int(k_within_regime), d_same.size)
-    if k < 1:
-        raise ValueError("within-regime adaptive bandwidth must be >= 1")
-    bw = float(np.partition(d_same, k - 1)[k - 1])
-    if bw <= 1e-12:
-        positive = d_same[d_same > 1e-12]
-        bw = float(np.min(positive)) if positive.size else 1.0
-    bw = float(np.nextafter(bw, np.inf))
-
-    weights = np.zeros_like(distances_i, dtype=float)
-    ratio = d_same / bw
-    weights[same_regime] = np.where(ratio < 1.0, (1.0 - ratio**2) ** 2, 0.0)
-    return weights
-
-
-def _fit_unified(
-    Xd: np.ndarray,
-    y: np.ndarray,
-    distances: np.ndarray,
-    labels: np.ndarray,
-):
-    n, p = Xd.shape
-    params = np.empty((n, p), dtype=float)
-    fitted = np.empty(n, dtype=float)
-    hat = np.zeros((n, n), dtype=float)
-    effective_k = np.empty(n, dtype=int)
-
-    regime_sizes = {int(r): int(np.sum(labels == r)) for r in np.unique(labels)}
-
-    for i in range(n):
-        same = labels == labels[i]
-        k_i = regime_sizes[int(labels[i])]
-        w = _regime_local_weights(distances[i], same, k_i)
-        beta, C = BasicGWR._solve_local(Xd, y, w)
-        params[i] = beta
-        fitted[i] = Xd[i] @ beta
-        hat[i] = Xd[i] @ C
-        effective_k[i] = k_i
-
-    return params, fitted, hat, effective_k, regime_sizes
-
-
 def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
 
@@ -159,10 +109,17 @@ def main() -> None:
 
     Xz = (X - X.mean(axis=0)) / X.std(axis=0, ddof=0)
     yz = (y - y.mean()) / y.std(ddof=0)
-    Xd = np.column_stack([np.ones(len(df)), Xz])
-    distances = cdist(coords, coords)
 
-    params, fitted, hat, effective_k, regime_sizes = _fit_unified(Xd, yz, distances, labels)
+    model = RegimeAwareGWR(
+        bandwidth="regime_size",
+        kernel="bisquare",
+        fit_intercept=True,
+    ).fit(Xz, yz, coords, labels)
+    params = model.parameters_
+    fitted = model.fitted_values_
+    hat = model.hat_matrix_
+    effective_k = model.local_bandwidths_
+    regime_sizes = {int(r): int(np.sum(labels == r)) for r in np.unique(labels)}
     metrics = _metrics(yz, fitted, hat)
 
     reference_params = df[[f"restricted_{t}" for t in TERMS]].to_numpy(dtype=float)
@@ -204,8 +161,19 @@ def main() -> None:
         county[f"delta_{term}"] = parameter_difference[:, j]
     county.to_csv(OUT / "county_equivalence.csv", index=False)
 
+    equivalence = {
+        "max_abs_parameter_difference": float(np.max(np.abs(parameter_difference))),
+        "rmse_parameter_difference": float(np.sqrt(np.mean(parameter_difference**2))),
+        "max_abs_fitted_difference": float(np.max(np.abs(fitted_difference))),
+        "rmse_fitted_difference": float(np.sqrt(np.mean(fitted_difference**2))),
+        "trace_hat_difference": float(metrics["trace_hat"] - current_metrics["trace_hat"]),
+        "rss_difference": float(metrics["rss"] - current_metrics["rss"]),
+    }
+    if equivalence["max_abs_parameter_difference"] > 1e-12 or equivalence["max_abs_fitted_difference"] > 1e-12:
+        raise RuntimeError(f"Reusable unified RegimeAwareGWR failed equivalence check: {equivalence}")
+
     summary = {
-        "status": "exploratory_unified_regime_local_adaptive_equivalence_test",
+        "status": "current_unified_regime_aware_refit_baseline",
         "n_counties": int(len(df)),
         "K": 6,
         "one_model_fit": True,
@@ -215,18 +183,10 @@ def main() -> None:
         "regime_sizes": regime_sizes,
         "unified_metrics": metrics,
         "independent_regime_gwr_metrics": current_metrics,
-        "equivalence": {
-            "max_abs_parameter_difference": float(np.max(np.abs(parameter_difference))),
-            "rmse_parameter_difference": float(np.sqrt(np.mean(parameter_difference**2))),
-            "max_abs_fitted_difference": float(np.max(np.abs(fitted_difference))),
-            "rmse_fitted_difference": float(np.sqrt(np.mean(fitted_difference**2))),
-            "trace_hat_difference": float(metrics["trace_hat"] - current_metrics["trace_hat"]),
-            "rss_difference": float(metrics["rss"] - current_metrics["rss"]),
-        },
-        "interpretation_guard": (
-            "This test changes implementation/formulation, not statistical flexibility. "
-            "If equivalent, one unified fit can represent the six current regime GWR fits, "
-            "but trace(S) and conditional AICc should remain essentially unchanged."
+        "equivalence": equivalence,
+        "baseline_note": (
+            "Use this unified RegimeAwareGWR refit primitive for subsequent label-refinement and iteration experiments. "
+            "The statistical-complexity issue is intentionally left open and is not changed by this reformulation."
         ),
     }
     (OUT / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
