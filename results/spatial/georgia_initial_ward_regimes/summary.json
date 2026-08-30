@@ -1,0 +1,31 @@
+{
+  "n_counties": 159,
+  "queen_edges": 431,
+  "candidate_K": [
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15
+  ],
+  "fingerprint_terms": [
+    "PctFB",
+    "PctBlack",
+    "PctRural"
+  ],
+  "intercept_used": false,
+  "coordinates_used_in_clustering_features": false,
+  "spatial_constraint": "Queen contiguity",
+  "clustering": "Ward agglomerative clustering constrained by Queen connectivity",
+  "all_candidate_regimes_connected": true,
+  "note": "Exploratory initial partitions only; no final K selected and no boundary-aware refit applied."
+}
