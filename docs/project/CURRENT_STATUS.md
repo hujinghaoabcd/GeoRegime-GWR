@@ -6,7 +6,7 @@ Last updated: 2026-08-30
 
 **Phase 1 — GR-GWR component research**
 
-标准 GWR 基线已经完成端到端验证并封存。当前正在逐组件研究 GR-GWR。已经完成 Georgia Queen W、pilot GWR local coefficients、local relationship edge diagnostics、Queen-constrained Ward 初始分区、K=6 fixed-label regime-restricted GWR、MGWR benchmark 与 K sensitivity。
+标准 GWR 基线已经完成端到端验证并封存。当前正在逐组件研究 GR-GWR。已经完成 Georgia Queen W、pilot GWR local coefficients、local relationship edge diagnostics、Queen-constrained Ward 初始分区、K=6 regime-aware refit、MGWR benchmark 与 K sensitivity。
 
 ## Completed
 
@@ -26,6 +26,9 @@ Last updated: 2026-08-30
 - Focused K=6 初始分区已检查：sizes = 53,19,17,22,27,21；WCSS=41.17628003831048。
 - Fixed K=6 regime-restricted GWR 已完成：每个 regime 只借本区样本，cross-regime weights=0；无 label refinement。
 - K=6 每区独立 bandwidth 全部顶到 regime size：53,19,17,22,27,21。
+- 已验证“六个独立 regime GWR”可改写为**一个统一的 regime-aware GWR**：159 counties 一次 fit；区内定义 adaptive distance；跨区权重为 0。
+- 统一版本与六个独立 GWR 达到机器精度等价：max parameter difference `3.33e-16`，max fitted difference `8.88e-16`，trace(S) 完全一致。
+- 已加入可复用 `RegimeAwareGWR`：`src/georegime_gwr/regime_gwr.py`，作为后续 refinement / iteration 的当前 refit baseline。
 - Fixed K=6 模型形式对照已完成：ordinary GWR vs K6 regime OLS vs K6 regime GWR。
 - External MGWR benchmark 已完成（`mgwr==2.2.1`）。
 - `K=2..15` fixed-partition regime-GWR sensitivity 已完成；当前严格规格可稳定完成 K=2..6。
@@ -68,24 +71,26 @@ Last updated: 2026-08-30
 8. initial segmentation 暂用 Queen-constrained Ward；
 9. K=2..15 仅为 exploratory scan；
 10. 当前继续使用 K=6 作为 working candidate，**不是最终 K**；
-11. fixed K=6 后每个 regime 暂独立自动选 bandwidth；
-12. AICc、lambda、ICM/refinement、最终 bandwidth policy 均未冻结。
+11. 后续算法的当前 refit baseline 改为一个统一 `RegimeAwareGWR`，权重规则为 `K(regime-local distance) * I(same regime)`；
+12. 当前 Georgia K=6 baseline 使用 `k_i = focal regime size`，因为它与此前六区独立自动带宽结果完全等价；
+13. 复杂度问题没有因此解决：trace(S)=39.7019 与原六个独立 GWR 相同，继续保留为 OPEN；
+14. AICc、lambda、ICM/refinement、最终 bandwidth policy 均未冻结。
 
 ## Current empirical results
 
-### Ordinary GWR / MGWR / K=6 restricted GWR
+### Ordinary GWR / MGWR / K=6 regime-aware GWR
 
 - ordinary GWR: RMSE=0.56681, MAE=0.39943, R2=0.67872, trace(S)=11.9121, AICc=298.99；
 - MGWR: RMSE=0.56579, MAE=0.40098, R2=0.67988, trace(S)=11.3683, AICc=297.12；
-- K=6 regime-restricted GWR: RMSE=0.52064, MAE=0.34497, R2=0.72893, trace(S)=39.7019, conditional AICc=354.01。
+- K=6 unified regime-aware GWR: RMSE=0.52064, MAE=0.34497, R2=0.72893, trace(S)=39.7019, conditional AICc=354.01。
 
 MGWR bandwidths：Intercept=92, PctFB=101, PctBlack=136, PctRural=158。
 
-这些目前都是 exploratory / in-sample evidence，不能据此宣称 GR-GWR 已优于 MGWR。
+当前 unified regime-aware GWR 与之前 six-independent-regime GWR 只是统一模型表述与实现改变，统计拟合与复杂度不变。这些目前仍都是 exploratory / in-sample evidence，不能据此宣称 GR-GWR 已优于 MGWR。
 
 ### K sensitivity
 
-当前 fixed-partition -> per-regime GWR：
+当前 fixed-partition -> regime-aware/refit 等价结果：
 
 - K=2: RMSE=0.57225, R2=0.67253；
 - K=3: RMSE=0.55129, R2=0.69608；
@@ -106,8 +111,9 @@ K=7..9 出现 size=7 regime，当前严格 bandwidth search 无法稳定完成�
 - pilot GWR boundary smoothing 与真实边界恢复能力；
 - K selection 与 Kmax/minimum regime size；
 - in-sample K 增大带来的 data-adaptive advantage；
-- per-regime vs shared bandwidth；
-- 所有 K=5/6 regime bandwidth 顶到最大值的含义；
+- bandwidth 最终定义；
+- K=5/6 regime bandwidth 顶到最大值的含义；
+- 当前 unified refit 的 effective df / complexity 仍然较高，统一实现本身并未降低复杂度；
 - MGWR multiscale heterogeneity 与 GR-GWR discontinuous/regime heterogeneity 的正式比较；
 - AICc / effective df / partition-selection complexity；
 - Ward 是否只是 initializer；
@@ -117,17 +123,31 @@ K=7..9 出现 size=7 regime，当前严格 bandwidth search 无法稳定完成�
 
 这些问题全部保持 OPEN，不在当前阶段强行解决。
 
+## Current refit baseline
+
+后续算法统一使用：
+
+`RegimeAwareGWR(bandwidth="regime_size", kernel="bisquare")`
+
+核心规则：
+
+`w_ij = K(d_ij / b_i) * I(z_i == z_j)`
+
+其中 `b_i` 的 adaptive 距离只由 i 所在 regime 内的观测决定；当前 Georgia baseline 令 `k_i = regime size`。
+
+这取代“代码层面分别调用六个 BasicGWR”作为后续算法表述，但与其当前数值结果完全等价。**这只是当前实验基准，不代表最终 bandwidth/complexity 方案已冻结。**
+
 ## Current algorithm path
 
 为了先看完整算法行为，当前不重构总体思路，继续既有研究链：
 
-`ordinary pilot GWR -> Queen-constrained Ward initial regimes -> fixed-regime restricted GWR -> label refinement -> restricted GWR refit -> iterate / converge`
+`ordinary pilot GWR -> Queen-constrained Ward initial regimes -> unified RegimeAwareGWR refit -> label refinement -> unified RegimeAwareGWR refit -> iterate / converge`
 
 当前 K=6 仅作为 working candidate 用于跑通这条完整链。
 
 ## Current highest-priority task
 
-**在当前 K=6 working partition 上进入第一轮 label refinement。**
+**在当前 K=6 working partition 和统一 RegimeAwareGWR baseline 上进入第一轮 label refinement。**
 
 要求：
 
@@ -135,14 +155,14 @@ K=7..9 出现 size=7 regime，当前严格 bandwidth search 无法稳定完成�
 - 不允许 source regime 因单点移动而被切断；
 - target label 只从当前 label + Queen 邻居 labels 中选择；
 - 不允许产生过小/不可估计 regime；
-- refinement 后重新做 regime-restricted GWR；
+- refinement 后重新做统一 RegimeAwareGWR refit；
 - 记录 label changes、regime sizes、connectivity、boundary edges、RSS/RMSE/MAE/R2 和 objective change；
 - 当前 lambda / objective 仍只是 exploratory baseline，不冻结为论文最终定义。
 
 ## Next tasks
 
 1. K=6 第一轮 label refinement；
-2. refinement 后 restricted GWR refit；
+2. refinement 后 unified RegimeAwareGWR refit；
 3. 若仍有有效 label change，则按既有思路继续迭代到稳定；
 4. 记录完整 convergence path；
-5. 完整链跑通后，再系统解决 K、bandwidth、lambda、AICc、CV、inference 和 synthetic boundary validation。
+5. 完整链跑通后，再系统解决 K、bandwidth、complexity、lambda、AICc、CV、inference 和 synthetic boundary validation。
