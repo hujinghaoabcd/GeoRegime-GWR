@@ -1,0 +1,55 @@
+name: basicgwr-validation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/georegime_gwr/gwr.py"
+      - "experiments/validation/basicgwr_vs_mgwr_georgia.py"
+      - "data/raw/georgia/**"
+      - ".github/workflows/basicgwr-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install validation environment
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install \
+            "numpy==1.26.4" \
+            "scipy==1.11.4" \
+            "pandas==2.2.3" \
+            "libpysal==4.10.0" \
+            "mgwr==2.2.1"
+
+      - name: Validate BasicGWR numerically
+        run: python experiments/validation/basicgwr_vs_mgwr_georgia.py
+
+      - name: Show validation summary
+        run: cat results/validation/basicgwr_vs_mgwr_georgia/README.md
+
+      - name: Persist validation outputs
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f results/validation/basicgwr_vs_mgwr_georgia
+          if git diff --cached --quiet; then
+            echo "No validation changes to commit."
+          else
+            git commit -m "test: store BasicGWR Georgia validation [skip ci]"
+            git push
+          fi
