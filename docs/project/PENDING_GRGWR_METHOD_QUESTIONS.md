@@ -99,6 +99,37 @@ Georgia 初始探索只是扫描 `K=2..15`。`15` 是探索上限，不是理论
 
 还必须解决 `K_max` 的定义。后续更合理的方向是由最小可接受 regime size 和局部回归可识别性约束决定，而不是人为固定为 15。
 
+### 5.1 最新 K 敏感性结果（fixed partition -> per-regime GWR）
+
+已按同一规格测试当前 Ward 候选：固定每个 K 的初始 labels，然后每个 regime 独立做 BasicGWR，不做 label refinement。
+
+可稳定完成当前 4 参数局部回归的 K 为 `2..6`：
+
+| K | RMSE | MAE | R2 | conditional AICc | min regime n |
+|---|---:|---:|---:|---:|---:|
+| 2 | 0.57225 | 0.39512 | 0.67253 | 306.61 | 62 |
+| 3 | 0.55129 | 0.37451 | 0.69608 | 310.49 | 17 |
+| 4 | 0.54037 | 0.35732 | 0.70800 | 320.95 | 17 |
+| 5 | 0.53018 | 0.34870 | 0.71891 | 336.03 | 17 |
+| 6 | 0.52064 | 0.34497 | 0.72893 | 354.01 | 17 |
+
+最新观察：
+
+- 在当前样本内结果中，K=3 到 K=6 的 RMSE 随 K 增大持续下降；
+- K=2 反而略差于 ordinary GWR，说明“随便分区”不会自动改善；
+- K=6 是当前可稳定估计候选中样本内 RMSE / MAE / R2 最好的一个；
+- 但这种单调改善不能作为 K=6 最优的最终证据，因为 labels 本身来自同一数据的 pilot GWR 系数，存在 data-adaptive / in-sample advantage；
+- K=7..9 出现 size=7 regime，当前严格 AICc bandwidth search 在该小区对所有候选带宽均无法稳定求解；
+- K=10..15 已出现 size=4 regime，等于当前 intercept + 3 slopes 的参数数目，明显不适合作为稳定局部 GWR regime；
+- 因此当前数据下 K=6 同时是“无极小 regime 且当前规格可稳定估计”的最后一个候选，但这只是经验事实，不是 K=6 的理论证明。
+
+必须后续解决：
+
+- 最小 regime size 应如何正式定义；
+- K 的可行域应如何由 local estimability / rank / effective sample size 约束自动确定；
+- 空间交叉验证是否仍支持 K=3->6 的改善趋势；
+- K 选择时是否需要把完整 pipeline（pilot GWR、partition、refit、refinement）放进每个 CV fold 内重新学习，避免 leakage。
+
 ## 6. WCSS 的定位
 
 WCSS = within-cluster sum of squares，只衡量当前 fingerprint space 中各 regime 内部的紧凑程度。
@@ -191,16 +222,96 @@ WCSS = within-cluster sum of squares，只衡量当前 fingerprint space 中各 
 
 尤其要回答：当自动带宽总是顶到 regime size 上限时，GR-GWR 是否实际上更接近“分区内空间加权回归 / 接近区域回归”，以及这是否符合模型设计目标。
 
-## 9. 接下来的工作顺序
+## 9. MGWR 对照带来的新问题
 
-当前已有两层结果：初始 K=6 分区，以及固定 K=6 的最简单 regime-restricted GWR。
+当前 external benchmark 使用 `mgwr==2.2.1`、同一 Georgia 数据、同一全局 z-score 和 adaptive bisquare。
 
-下一阶段再逐项研究：
+MGWR 自动带宽：
 
-- pilot GWR boundary smoothing；
-- K selection；
-- per-regime vs shared bandwidth；
-- Ward 是否只是 initializer；
-- 是否需要 regime-restricted refit + iterative label refinement；
-- 如何控制因分区导致的有效复杂度增长；
-- spatial / blocked CV 是否支持真实泛化改善。
+- Intercept = 92；
+- PctFB = 101；
+- PctBlack = 136；
+- PctRural = 158。
+
+样本内结果：
+
+- ordinary GWR: RMSE=0.56681, R2=0.67872, trace(S)=11.9121, AICc=298.99；
+- MGWR: RMSE=0.56579, R2=0.67988, trace(S)=11.3683, AICc=297.12；
+- K=6 regime-restricted GWR: RMSE=0.52064, R2=0.72893, trace(S)=39.7019, conditional AICc=354.01。
+
+当前只能说：
+
+- MGWR 在该数据上相对 ordinary GWR 的样本内改善很小，但 AICc 略优；
+- MGWR 的 effective degrees of freedom 并不必然高于 GWR，因为变量特异 bandwidth 可以接近全局尺度；
+- 当前 K=6 regime-restricted GWR 的样本内拟合改善明显更大，但不能据此宣称优于 MGWR，因为分区由同一数据学习，且尚无 out-of-sample 验证。
+
+后续必须把 MGWR 作为正式 benchmark，比较：
+
+- out-of-sample prediction；
+- coefficient surface / boundary behavior；
+- known-boundary synthetic DGP 下的 coefficient recovery；
+- boundary-near vs boundary-far error。
+
+理论定位暂定为：
+
+- MGWR 主要处理 variable-specific multiscale spatial heterogeneity；
+- GR-GWR 研究的是 discrete regime / discontinuous spatial heterogeneity 和 cross-boundary borrowing；
+- 二者不是同一个问题，不能用“谁更复杂”简单代替方法比较。
+
+## 10. AICc / effective degrees of freedom 怎么解释？
+
+当前不因为 GR-GWR 的 trace(S) 高就否定 `regime -> within-regime GWR` 结构，但这个问题必须保留。
+
+尤其要区分：
+
+- flexible model 本身拥有更高 effective degrees of freedom；
+- 这种灵活性是否带来可泛化改善；
+- 当前 conditional AICc 把 regime labels 当成固定已知，因此**没有计入由 y -> pilot GWR -> Ward labels 产生的 partition-selection complexity**。
+
+因此当前 GR-GWR AICc 只能作为 exploratory conditional comparison，不能作为最终模型优劣结论。
+
+后续需要研究：
+
+- data-adaptive segmentation 下传统 GWR AICc 是否仍有合理解释；
+- 是否能得到更合适的 complexity accounting；
+- 是否应以 spatial CV 为主要模型选择证据，而把 AICc 作为辅助；
+- 是否有必要报告 conditional-on-partition AICc，并明确它不计入分区搜索复杂度。
+
+## 11. 当前推进策略：问题保留，但不打断既有算法链
+
+截至本次记录，以上问题全部保持 **OPEN / pending**，不在当前阶段强行定论。
+
+当前实验继续按既有主线推进：
+
+`ordinary pilot GWR -> Queen-constrained Ward initial regimes -> fixed-regime restricted GWR -> label refinement -> refit -> iterate / converge`
+
+当前 working candidate 仍使用 K=6，只因为它是目前最方便继续检查完整算法行为的 exploratory candidate，而不是因为已经证明 K=6 最优。
+
+在继续算法时遵守：
+
+- 不改变 D / W 分离原则；
+- Georgia 继续使用 Queen W；
+- fingerprint 暂继续使用三个标准化 slopes；
+- coordinates 暂不进入 fingerprint；
+- 不把 K=6、per-regime bandwidth、Ward、lambda、AICc 解释写成最终冻结方法；
+- 每完成一步，都把新现象继续回填到本文，而不是中途反复重构总体算法。
+
+## 12. 接下来的工作顺序
+
+当前已有：
+
+1. pilot ordinary GWR；
+2. Queen W；
+3. K=2..15 Ward initial partitions；
+4. focused K=6 initial partition；
+5. fixed K=6 regime-restricted GWR；
+6. K sensitivity；
+7. MGWR external benchmark。
+
+下一步继续既有算法链：
+
+- 在当前 K=6 working partition 上做第一轮 label refinement；
+- refinement 后重新做 regime-restricted GWR；
+- 检查 label changes、regime connectivity、regime sizes、RSS/RMSE/MAE/R2、boundary changes；
+- 若 objective / labels 继续变化，则按既有思路迭代到稳定；
+- 先观察完整算法行为，再回头系统解决 K、bandwidth、lambda、AICc、CV、inference 等方法问题。
