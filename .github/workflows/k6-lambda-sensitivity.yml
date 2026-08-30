@@ -1,0 +1,63 @@
+name: k6-lambda-sensitivity
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/k6-lambda-sensitivity.yml"
+      - "experiments/real_data/georgia_gwr_baseline/run_georgia_k6_lambda_sensitivity.py"
+      - "experiments/real_data/georgia_gwr_baseline/run_georgia_k6_unified_label_refinement.py"
+      - "src/georegime_gwr/**"
+      - "data/raw/georgia/**"
+      - "results/spatial/georgia_initial_ward_regimes/initial_regime_labels_k2_k15.csv"
+      - "results/spatial/georgia_queen_w/edge_list.csv"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sensitivity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install environment
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "numpy==1.26.4" "scipy==1.11.4" "pandas==2.2.3"
+
+      - name: Run lambda sensitivity
+        run: python experiments/real_data/georgia_gwr_baseline/run_georgia_k6_lambda_sensitivity.py
+
+      - name: Show sensitivity table
+        run: |
+          cat results/real_data/georgia_k6_lambda_sensitivity/lambda_sensitivity.csv
+          cat results/real_data/georgia_k6_lambda_sensitivity/summary.json
+
+      - name: Persist sensitivity outputs
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f results/real_data/georgia_k6_lambda_sensitivity
+          if git diff --cached --quiet; then
+            echo "No changes."
+          else
+            git commit -m "test: store K6 lambda sensitivity [skip ci]"
+            for attempt in 1 2 3; do
+              git fetch origin main
+              git rebase origin/main
+              if git push origin HEAD:main; then
+                exit 0
+              fi
+              sleep 3
+            done
+            exit 1
+          fi
