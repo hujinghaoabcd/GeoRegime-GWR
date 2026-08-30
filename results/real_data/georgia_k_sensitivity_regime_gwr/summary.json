@@ -1,0 +1,60 @@
+{
+  "status": "exploratory_fixed_partition_k_sensitivity",
+  "candidate_K": [
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15
+  ],
+  "feasible_K": [
+    2,
+    3,
+    4,
+    5,
+    6
+  ],
+  "infeasible_K": [
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15
+  ],
+  "minimum_regime_n_required_here": 5,
+  "ordinary_gwr_bandwidth": 116,
+  "ordinary_gwr": {
+    "rss": 51.082900556856075,
+    "rmse": 0.5668122300472797,
+    "mae": 0.399432936791771,
+    "r2": 0.6787238958688298,
+    "trace_hat": 11.912091033737672,
+    "aicc_fixed_partition": 298.9855995813665
+  },
+  "mgwr_reference": {
+    "rss": 50.899379467870425,
+    "rmse": 0.5657931454566466,
+    "mae": 0.4009779777838139,
+    "r2": 0.679878116554274,
+    "trace_hat": 11.368250872698306,
+    "aicc": 297.12013812258783
+  },
+  "best_in_sample_rmse_K": 6,
+  "best_in_sample_mae_K": 6,
+  "best_in_sample_r2_K": 6,
+  "best_conditional_aicc_K": 2,
+  "warning": "Exploratory in-sample comparison only. Ward labels are learned from the same data; conditional AICc omits partition-selection complexity."
+}

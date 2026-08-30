@@ -1,0 +1,15 @@
+K,status,failed_regime,failure_reason,min_regime_n,max_regime_n,regime_sizes,rss,rmse,mae,r2,trace_hat,aicc_fixed_partition,all_bandwidths_at_regime_max
+2,fit,,,62,97,97;62,52.0676654753516,0.5722495908120873,0.395124572849608,0.6725304058153987,13.808905816145629,306.6089463718057,True
+3,fit,,,17,80,80;17;62,48.322915399630226,0.5512873179349526,0.37450510035927814,0.6960822930840866,19.960163327066944,310.49163652432503,False
+4,fit,,,17,80,80;41;17;21,46.42772772844422,0.5403686589729997,0.35731827313724424,0.708001712399722,25.970151827140278,320.94690143929733,False
+5,fit,,,17,53,53;41;17;27;21,44.69344085717026,0.5301799911360959,0.3487046569046699,0.7189091769989292,32.815641402345584,336.0311552668676,True
+6,fit,,,17,53,53;19;17;22;27;21,43.100070636050596,0.5206434736379855,0.34497330816164706,0.7289303733581723,39.70185564133625,354.0114746822055,True
+7,infeasible_bandwidth_search,7.0,RuntimeError: bandwidth selection failed for every candidate,7,53,53;15;19;17;27;21;7,,,,,,,
+8,infeasible_bandwidth_search,8.0,RuntimeError: bandwidth selection failed for every candidate,7,37,16;15;37;19;17;27;21;7,,,,,,,
+9,infeasible_bandwidth_search,8.0,RuntimeError: bandwidth selection failed for every candidate,7,37,16;15;37;19;17;27;9;7;12,,,,,,,
+10,infeasible_small_regime,,min regime n=4 < 5,4,37,16;4;15;37;19;13;27;9;7;12,,,,,,,
+11,infeasible_small_regime,,min regime n=4 < 5,4,27,16;4;15;26;19;11;13;27;9;7;12,,,,,,,
+12,infeasible_small_regime,,min regime n=4 < 5,4,27,16;9;4;26;19;11;6;13;27;9;7;12,,,,,,,
+13,infeasible_small_regime,,min regime n=4 < 5,4,26,16;9;4;26;19;11;6;13;19;8;9;7;12,,,,,,,
+14,infeasible_small_regime,,min regime n=4 < 5,4,26,16;9;4;26;19;11;6;13;19;8;9;7;7;5,,,,,,,
+15,infeasible_small_regime,,min regime n=4 < 5,4,19,16;11;9;4;19;15;11;6;13;19;8;9;7;7;5,,,,,,,
