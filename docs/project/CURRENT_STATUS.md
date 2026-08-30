@@ -6,7 +6,7 @@ Last updated: 2026-08-30
 
 **Phase 1 — GR-GWR component research**
 
-标准 GWR 基线已经完成端到端验证并封存。当前正在逐组件研究 GR-GWR。已经完成 Georgia Queen W、pilot GWR local coefficients、local relationship edge diagnostics、Queen-constrained Ward 初始分区、K=6 regime-aware refit、MGWR benchmark 与 K sensitivity。
+标准 GWR 基线已经完成端到端验证并封存。当前正在逐组件研究 GR-GWR。已经完成 Georgia Queen W、pilot GWR local coefficients、local relationship edge diagnostics、Queen-constrained Ward 初始分区、K=6 unified regime-aware refit、MGWR benchmark、K sensitivity，以及按既有 baseline 逻辑执行的 K=6 label refinement 到收敛。
 
 ## Completed
 
@@ -32,6 +32,8 @@ Last updated: 2026-08-30
 - Fixed K=6 模型形式对照已完成：ordinary GWR vs K6 regime OLS vs K6 regime GWR。
 - External MGWR benchmark 已完成（`mgwr==2.2.1`）。
 - `K=2..15` fixed-partition regime-GWR sensitivity 已完成；当前严格规格可稳定完成 K=2..6。
+- 已按既有 baseline 逻辑完成 K=6 refinement：Queen 邻接候选、source-connectivity guard、LOO prediction cost、`RSS + lambda * boundary edges` objective guard、统一 `RegimeAwareGWR` 每轮重拟合。
+- 当前 `lambda=1.0` 下共接受 8 轮 refinement 后无 label changes，算法收敛。
 
 ## Standard GWR bandwidth policy — FROZEN BY ADR-0003
 
@@ -71,10 +73,11 @@ Last updated: 2026-08-30
 8. initial segmentation 暂用 Queen-constrained Ward；
 9. K=2..15 仅为 exploratory scan；
 10. 当前继续使用 K=6 作为 working candidate，**不是最终 K**；
-11. 后续算法的当前 refit baseline 改为一个统一 `RegimeAwareGWR`，权重规则为 `K(regime-local distance) * I(same regime)`；
+11. 后续算法的当前 refit baseline 为统一 `RegimeAwareGWR`，权重规则为 `K(regime-local distance) * I(same regime)`；
 12. 当前 Georgia K=6 baseline 使用 `k_i = focal regime size`，因为它与此前六区独立自动带宽结果完全等价；
-13. 复杂度问题没有因此解决：trace(S)=39.7019 与原六个独立 GWR 相同，继续保留为 OPEN；
-14. AICc、lambda、ICM/refinement、最终 bandwidth policy 均未冻结。
+13. 复杂度问题没有因此解决：初始 unified refit trace(S)=39.7019，与原六个独立 GWR 相同，继续保留为 OPEN；
+14. 当前 refinement 沿用旧 baseline 的 `lambda_boundary=1.0`、minimum regime size = 6、sequential ICM-style moves，仅用于把既有算法跑通；
+15. AICc、lambda、ICM/refinement、最终 bandwidth policy 均未冻结。
 
 ## Current empirical results
 
@@ -82,7 +85,7 @@ Last updated: 2026-08-30
 
 - ordinary GWR: RMSE=0.56681, MAE=0.39943, R2=0.67872, trace(S)=11.9121, AICc=298.99；
 - MGWR: RMSE=0.56579, MAE=0.40098, R2=0.67988, trace(S)=11.3683, AICc=297.12；
-- K=6 unified regime-aware GWR: RMSE=0.52064, MAE=0.34497, R2=0.72893, trace(S)=39.7019, conditional AICc=354.01。
+- K=6 initial unified regime-aware GWR: RMSE=0.52064, MAE=0.34497, R2=0.72893, trace(S)=39.7019, conditional AICc=354.01。
 
 MGWR bandwidths：Intercept=92, PctFB=101, PctBlack=136, PctRural=158。
 
@@ -102,6 +105,35 @@ K=7..9 出现 size=7 regime，当前严格 bandwidth search 无法稳定完成�
 
 当前只说明 K=6 是可稳定估计候选中样本内拟合最好、且没有极小 regime 的 working candidate；不代表最终 K 已选定。
 
+### Existing-baseline refinement result — exploratory only
+
+当前 K=6 initial labels：
+
+- regime sizes = `53,19,17,22,27,21`；
+- boundary edges = `102`；
+- RSS = `43.1001`；
+- RMSE = `0.52064`；
+- MAE = `0.34497`；
+- R2 = `0.72893`；
+- trace(S) = `39.7019`；
+- objective (`RSS + 1.0 * boundary_edges`) = `145.1001`。
+
+按既有 baseline refinement 迭代 8 轮后稳定：
+
+- final regime sizes = `62,19,6,38,17,17`；
+- 35 / 159 counties 相对初始 label 发生变化；
+- boundary edges = `72`；
+- RSS = `41.2006`；
+- RMSE = `0.50904`；
+- MAE = `0.32566`；
+- R2 = `0.74088`；
+- trace(S) = `40.6906`；
+- objective = `113.2006`；
+- all regimes remain Queen-connected；
+- stop reason = `no_label_changes`。
+
+这个结果**不能当最终算法结果**。最重要的警告是：R3 被持续压缩到 minimum regime size = 6，说明当前 `lambda=1.0 + boundary-count penalty + sequential refinement` 很可能强烈偏好减少边界。它只证明旧 baseline 链可以运行并收敛，不证明该 refinement objective 合理。
+
 ## Pending method questions — MUST RESOLVE LATER
 
 完整记录：`docs/project/PENDING_GRGWR_METHOD_QUESTIONS.md`
@@ -118,6 +150,7 @@ K=7..9 出现 size=7 regime，当前严格 bandwidth search 无法稳定完成�
 - AICc / effective df / partition-selection complexity；
 - Ward 是否只是 initializer；
 - refinement / ICM / lambda 如何定义；
+- 当前 lambda=1.0 为什么把一个 regime 压到最小值 6，boundary penalty 是否过强或目标函数形式是否需要重构；
 - spatial / blocked CV、partition stability、synthetic known-boundary validation；
 - intercept / coordinates / uncertainty-aware fingerprint 等消融。
 
@@ -139,30 +172,21 @@ K=7..9 出现 size=7 regime，当前严格 bandwidth search 无法稳定完成�
 
 ## Current algorithm path
 
-为了先看完整算法行为，当前不重构总体思路，继续既有研究链：
+当前既有研究链已经完整跑通：
 
-`ordinary pilot GWR -> Queen-constrained Ward initial regimes -> unified RegimeAwareGWR refit -> label refinement -> unified RegimeAwareGWR refit -> iterate / converge`
+`ordinary pilot GWR -> Queen-constrained Ward initial regimes -> unified RegimeAwareGWR refit -> label refinement -> unified RegimeAwareGWR refit -> iterate -> converge`
 
-当前 K=6 仅作为 working candidate 用于跑通这条完整链。
+当前 K=6 与 lambda=1.0 仅用于验证完整链行为，不是最终超参数或算法定义。
 
 ## Current highest-priority task
 
-**在当前 K=6 working partition 和统一 RegimeAwareGWR baseline 上进入第一轮 label refinement。**
+**先检查已收敛 refinement 结果本身：35 个 label changes 在空间上发生在哪里、R3 为什么被压到 n=6、哪些边界被消除、拟合改善来自哪些县。**
 
-要求：
-
-- Queen W 继续作为邻接与连通性约束；
-- 不允许 source regime 因单点移动而被切断；
-- target label 只从当前 label + Queen 邻居 labels 中选择；
-- 不允许产生过小/不可估计 regime；
-- refinement 后重新做统一 RegimeAwareGWR refit；
-- 记录 label changes、regime sizes、connectivity、boundary edges、RSS/RMSE/MAE/R2 和 objective change；
-- 当前 lambda / objective 仍只是 exploratory baseline，不冻结为论文最终定义。
+这一步仍然不解决 lambda / complexity，只先看清既有算法到底做了什么。
 
 ## Next tasks
 
-1. K=6 第一轮 label refinement；
-2. refinement 后 unified RegimeAwareGWR refit；
-3. 若仍有有效 label change，则按既有思路继续迭代到稳定；
-4. 记录完整 convergence path；
-5. 完整链跑通后，再系统解决 K、bandwidth、complexity、lambda、AICc、CV、inference 和 synthetic boundary validation。
+1. 绘制 initial K=6 vs converged labels，标出 changed counties；
+2. 检查 102 -> 72 条 boundary edges 的变化与 R3 收缩过程；
+3. 对比 refinement 前后局部系数与 residual improvement；
+4. 在看清行为后，再返回 pending list 系统解决 K、bandwidth、complexity、lambda、AICc、CV、inference 和 synthetic boundary validation。
