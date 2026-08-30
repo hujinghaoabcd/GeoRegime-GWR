@@ -55,29 +55,27 @@ def _load_data() -> gpd.GeoDataFrame:
     if shp_key is None or csv_key is None:
         raise RuntimeError("AreaKey column not found in Georgia shapefile or CSV")
 
-    missing = [var for var in VARIABLES if var not in df.columns]
-    if missing:
-        raise RuntimeError(f"Missing baseline variables in Georgia CSV: {missing}")
-
     gdf = gdf.copy()
     df = df.copy()
     gdf[shp_key] = gdf[shp_key].astype(str)
     df[csv_key] = df[csv_key].astype(str)
 
-    values = df[[csv_key] + VARIABLES].copy()
-    merged = gdf.merge(
-        values,
-        left_on=shp_key,
-        right_on=csv_key,
-        how="left",
-        validate="1:1",
-        sort=False,
-    )
+    # The canonical Georgia shapefile already contains the baseline variables.
+    # If a variable is ever absent there, fill only that missing variable from
+    # GData_utm.csv by AreaKey. This avoids pandas _x/_y merge suffixes.
+    csv_by_key = df.set_index(csv_key)
+    for variable in VARIABLES:
+        if variable not in gdf.columns:
+            if variable not in csv_by_key.columns:
+                raise RuntimeError(f"Missing baseline variable: {variable}")
+            gdf[variable] = gdf[shp_key].map(csv_by_key[variable])
 
-    if merged[VARIABLES].isna().any().any():
-        raise RuntimeError("Missing variable values after joining Georgia CSV to polygons")
+        gdf[variable] = pd.to_numeric(gdf[variable], errors="coerce")
 
-    return merged
+    if gdf[VARIABLES].isna().any().any():
+        raise RuntimeError("Missing or non-numeric baseline values in Georgia polygons")
+
+    return gdf
 
 
 def main() -> None:
