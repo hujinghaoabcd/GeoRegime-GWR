@@ -1,0 +1,52 @@
+{
+  "status": "exploratory_unified_shared_bandwidth_regime_aware_gwr",
+  "n_counties": 159,
+  "K": 6,
+  "labels_fixed": true,
+  "one_model_fit": true,
+  "weight_rule": "bisquare(global adaptive k-th-neighbour distance) * I(same K6 regime)",
+  "shared_adaptive_bandwidth_k": 159,
+  "bandwidth_search_range": [
+    8,
+    159
+  ],
+  "bandwidth_selected_by": "aggregate conditional/fixed-partition Gaussian AICc",
+  "same_regime_positive_count_at_best_k": {
+    "min": 17,
+    "median": 27.0,
+    "max": 53
+  },
+  "ordinary_gwr": {
+    "rss": 51.082900556856075,
+    "rmse": 0.5668122300472797,
+    "mae": 0.399432936791771,
+    "r2": 0.6787238958688298,
+    "trace_hat": 11.912091033737672,
+    "aicc_fixed_partition": 298.9855995813665
+  },
+  "shared_bandwidth_regime_aware_gwr": {
+    "rss": 47.586618782594336,
+    "rmse": 0.5470712116190672,
+    "mae": 0.36790500486402866,
+    "r2": 0.7007130894176457,
+    "trace_hat": 27.58499129485223,
+    "aicc_fixed_partition": 329.6517492043414
+  },
+  "independent_regime_gwr": {
+    "rss": 43.100070636050596,
+    "rmse": 0.5206434736379855,
+    "mae": 0.34497330816164706,
+    "r2": 0.7289303733581723,
+    "trace_hat": 39.70185564133625,
+    "aicc": 354.0114746822055
+  },
+  "mgwr_reference": {
+    "rss": 50.899379467870425,
+    "rmse": 0.5657931454566466,
+    "mae": 0.4009779777838139,
+    "r2": 0.679878116554274,
+    "trace_hat": 11.368250872698306,
+    "aicc": 297.12013812258783
+  },
+  "warning": "Exploratory fixed-label comparison only. K6 labels were learned from the same response-derived pilot GWR; the reported AICc does not charge partition-selection complexity."
+}
