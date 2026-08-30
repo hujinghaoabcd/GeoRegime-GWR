@@ -1,73 +1,120 @@
 # ADR-0003 — Standard GWR bandwidth search policy
 
-Status: **Accepted for the canonical Georgia reproduction baseline**
+Status: **Accepted**
 
 Date: 2026-08-30
 
 ## Context
 
-The research repository needs a self-contained `BasicGWR` that reproduces the canonical Georgia standard-GWR result end to end, including automatic bandwidth selection. The external reference is `mgwr==2.2.1`, but the repository must not depend on `mgwr` for its own fit or automatic search.
+The research repository needs a self-contained `BasicGWR` for two distinct purposes:
 
-While extracting the current PyGWRx adaptive AICc selector, we discovered an important difference in search policy:
+1. provide a rigorous standard-GWR baseline for later GR-GWR paper experiments;
+2. reproduce the canonical `mgwr==2.2.1` Georgia standard-GWR example when historical compatibility is explicitly requested.
 
-- current PyGWRx scans every valid integer adaptive bandwidth and therefore finds the global minimum on the scanned integer AICc curve;
-- `mgwr==2.2.1` uses a discrete golden-section search by default.
+These purposes must not be conflated.
 
-For the canonical Georgia specification, these policies do not return the same integer:
+Current PyGWRx and historical `mgwr==2.2.1` use different adaptive-bandwidth search policies:
 
-- current PyGWRx exhaustive search: `k = 116`;
-- canonical `mgwr==2.2.1` golden-section search: `k = 117`.
+- current PyGWRx treats adaptive bandwidth as a discrete integer neighbour order and exhaustively evaluates every valid `k`;
+- `mgwr==2.2.1` uses a rounded discrete golden-section search by default.
 
-The difference is a search-policy difference, not a failure of the GWR fitting equations. When both implementations are evaluated at `k=117`, local parameters, fitted values, residuals and the hat matrix agree to floating-point machine precision.
+On canonical Georgia these policies differ:
+
+- exhaustive integer AICc minimum: `k = 116`, AICc about `298.9856`;
+- historical mgwr discrete golden-section result: `k = 117`, AICc about `299.0508`.
+
+When both fit GWR at the same `k=117`, the local coefficients, fitted values, residuals and hat matrix agree to floating-point machine precision. The 116/117 difference is therefore a search-policy difference, not a GWR-equation discrepancy.
 
 ## Decision
 
-`BasicGWR(bandwidth="auto")` will use a locally implemented **mgwr-2.2.1-compatible discrete golden-section AICc search** for the canonical standard-GWR benchmark.
+The repository exposes **three explicit search modes**.
 
-The implementation lives in:
+### 1. Adaptive research default — exhaustive integer AICc
 
-- `src/georegime_gwr/bandwidth.py::MGWRCompatibleAICcSelector`
+`BasicGWR(bandwidth="auto")`
 
-It reproduces the relevant `mgwr==2.2.1` semantics:
+with adaptive bandwidth (the default for `"auto"`) uses:
 
-- adaptive integer bandwidth;
-- initial adaptive search section `40 + 2*p` through `n`, where `p` includes the intercept;
+- `PyGWRxAdaptiveAICcSelector`;
+- every valid integer `k` in the search domain is evaluated;
+- the minimum finite AICc is returned;
+- this is the **default research policy** because it gives the global minimum on the specified discrete candidate domain.
+
+For Georgia this returns `k=116`.
+
+### 2. Fixed-distance research default — golden-section AICc
+
+`BasicGWR(bandwidth="auto", adaptive=False)`
+
+uses:
+
+- `FixedGoldenAICcSelector`;
+- continuous golden-section minimization over a positive distance interval;
+- this reflects the fact that a fixed bandwidth is continuous rather than an integer neighbour order.
+
+The fixed-distance selector is implemented, but it has not yet been externally benchmarked against a dedicated fixed-GWR reference fixture. It must not be described as externally validated until such a test is added.
+
+### 3. Historical mgwr reproduction — explicit compatibility mode
+
+`BasicGWR(
+    bandwidth="auto",
+    adaptive=True,
+    search_strategy="mgwr_golden",
+)`
+
+uses:
+
+- `MGWRCompatibleAICcSelector`;
+- `mgwr==2.2.1` adaptive initial section semantics;
 - golden-section constant `0.38197`;
-- integer rounding at each evaluation;
-- tolerance `1e-6`;
-- maximum 200 iterations;
-- adaptive compact-kernel boundary distance multiplied by `1.0000001`;
-- Gaussian GWR AICc criterion.
+- integer rounding at candidate evaluations;
+- tolerance `1e-6` and maximum 200 iterations;
+- historical compact-kernel boundary inflation `* 1.0000001`;
+- Gaussian GWR AICc.
 
-The current PyGWRx exhaustive selector is also retained separately as:
+For canonical Georgia this mode is expected to return `k=117` and is used only when exact historical/canonical reproduction is the goal.
+
+## Rationale
+
+Adaptive bandwidth is an integer decision variable:
+
+`k ∈ {k_min, ..., n}`.
+
+For paper experiments, exhaustive evaluation removes optimizer uncertainty from the standard-GWR baseline. A reviewer can therefore not attribute a GR-GWR improvement to a standard GWR baseline whose discrete bandwidth optimizer stopped at a non-global candidate.
+
+Fixed-distance bandwidth is continuous, so exhaustive enumeration is not meaningful; golden-section or another continuous one-dimensional optimizer is appropriate.
+
+The historical mgwr search remains valuable for reproducibility, but reproducibility mode must not silently redefine the research default.
+
+## Implementation
 
 - `src/georegime_gwr/bandwidth.py::PyGWRxAdaptiveAICcSelector`
+- `src/georegime_gwr/bandwidth.py::FixedGoldenAICcSelector`
+- `src/georegime_gwr/bandwidth.py::MGWRCompatibleAICcSelector`
+- `src/georegime_gwr/gwr.py::BasicGWR`
 
-It must not be silently conflated with the benchmark-compatible selector.
+The selected policy and search result are exposed through fitted attributes such as `search_strategy_`, `bandwidth_`, and `bandwidth_search_`.
 
-## Validation
+## Validation contract
 
-On the canonical Georgia benchmark:
+The canonical Georgia validation must simultaneously check that:
 
-- external `mgwr.sel_bw.Sel_BW`: bandwidth `117`;
-- repository `BasicGWR(bandwidth="auto")`: bandwidth `117`;
-- max absolute local-parameter difference: `5.551115123125783e-16`;
-- max absolute fitted-value difference: `5.551115123125783e-16`;
-- max absolute residual difference: `5.551115123125783e-16`;
-- max absolute hat-matrix difference: `5.551115123125783e-17`;
-- RSS difference: `-7.105427357601002e-15`;
-- AICc difference: `-5.684341886080802e-14`;
-- end-to-end validation at tolerance `1e-12`: **PASS**.
+1. external `mgwr.sel_bw.Sel_BW` returns `117`;
+2. repository adaptive research default returns `116`;
+3. explicit `mgwr_golden` compatibility mode returns `117`;
+4. compatibility-mode GWR at 117 matches external `mgwr.gwr.GWR` numerically to machine precision;
+5. the exhaustive 116 solution has lower AICc than the compatibility 117 solution.
 
-Evidence:
+Evidence is maintained in:
 
 - `experiments/validation/basicgwr_vs_mgwr_georgia.py`
-- `results/validation/basicgwr_vs_mgwr_georgia/summary.json`
+- `results/validation/basicgwr_vs_mgwr_georgia/`
 - `.github/workflows/basicgwr-validation.yml`
 
 ## Consequences
 
-1. The canonical standard-GWR baseline can be reproduced by repository code without using `mgwr` for its own bandwidth selection or fitting.
-2. `mgwr` remains only an external validation oracle in the validation workflow.
-3. Search policy is now an explicit methodological choice. A later GR-GWR paper experiment may choose exhaustive AICc search instead, but that change must be documented and must not be presented as identical to the canonical mgwr benchmark.
-4. The fact that exhaustive search yields `116` while historical golden-section search yields `117` must be preserved as reproducibility evidence rather than hidden.
+1. **Do not say that `BasicGWR(bandwidth="auto")` reproduces mgwr 117 by default.** The adaptive research default is exhaustive and returns 116 on Georgia.
+2. Use `search_strategy="mgwr_golden"` only for historical/canonical mgwr reproduction.
+3. Standard-GWR paper comparisons should normally use the exhaustive adaptive policy unless a later ADR explicitly changes the experimental protocol.
+4. The 116/117 distinction is reproducibility evidence and must remain documented.
+5. GR-GWR's final bandwidth policy remains a separate methodological decision and is not frozen by this ADR.
