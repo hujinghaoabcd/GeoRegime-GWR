@@ -10,95 +10,95 @@
   "coordinates_used_in_fingerprint": false,
   "coefficient_standardization": "column-wise z-score, ddof=0",
   "edge_distance": "Euclidean distance between standardized slope fingerprints",
-  "distance_mean": 0.405562766962745,
-  "distance_std": 0.3437905735101621,
-  "distance_min": 0.02420454606090466,
-  "distance_q25": 0.18604496578329693,
-  "distance_median": 0.2977578693789451,
-  "distance_q75": 0.49541312603456655,
-  "distance_q90": 0.8685341189683338,
-  "distance_q95": 1.149079555103486,
-  "distance_max": 2.173743610223381,
+  "distance_mean": 0.40556276696274496,
+  "distance_std": 0.3437905735101618,
+  "distance_min": 0.02420454606090895,
+  "distance_q25": 0.18604496578330032,
+  "distance_median": 0.29775786937893983,
+  "distance_q75": 0.4954131260345701,
+  "distance_q90": 0.8685341189683352,
+  "distance_q95": 1.1490795551034867,
+  "distance_max": 2.1737436102233842,
   "top_10_edges": [
     {
       "AreaKey_i": "13175",
       "AreaKey_j": "13319",
-      "coef_distance": 2.173743610223381,
-      "delta_PctFB": -1.0079839636289354,
-      "delta_PctBlack": 1.3897678449859894,
-      "delta_PctRural": -1.3332947720203805
+      "coef_distance": 2.1737436102233842,
+      "delta_PctFB": -1.0079839636289367,
+      "delta_PctBlack": 1.3897678449859885,
+      "delta_PctRural": -1.3332947720203856
     },
     {
       "AreaKey_i": "13023",
       "AreaKey_j": "13319",
-      "coef_distance": 2.0679260103024286,
+      "coef_distance": 2.0679260103024295,
       "delta_PctFB": -1.0976865573995434,
-      "delta_PctBlack": 1.332504984344528,
-      "delta_PctRural": -1.1383464641692567
+      "delta_PctBlack": 1.3325049843445271,
+      "delta_PctRural": -1.1383464641692593
     },
     {
       "AreaKey_i": "13107",
       "AreaKey_j": "13163",
-      "coef_distance": 1.9590370973767104,
-      "delta_PctFB": -0.9170111916426769,
-      "delta_PctBlack": 0.9900437571730103,
-      "delta_PctRural": -1.4201162565730294
+      "coef_distance": 1.959037097376715,
+      "delta_PctFB": -0.917011191642678,
+      "delta_PctBlack": 0.9900437571730092,
+      "delta_PctRural": -1.4201162565730359
     },
     {
       "AreaKey_i": "13021",
       "AreaKey_j": "13153",
-      "coef_distance": 1.7522709692092557,
-      "delta_PctFB": 0.8650982361080798,
-      "delta_PctBlack": -1.3455832573564648,
-      "delta_PctRural": 0.7151673153452967
+      "coef_distance": 1.7522709692092548,
+      "delta_PctFB": 0.8650982361080781,
+      "delta_PctBlack": -1.3455832573564674,
+      "delta_PctRural": 0.7151673153452917
     },
     {
       "AreaKey_i": "13107",
       "AreaKey_j": "13267",
-      "coef_distance": 1.7385788738186425,
-      "delta_PctFB": 0.7690736774244616,
-      "delta_PctBlack": -0.9945857324862488,
-      "delta_PctRural": 1.2008252994986848
+      "coef_distance": 1.738578873818638,
+      "delta_PctFB": 0.7690736774244588,
+      "delta_PctBlack": -0.99458573248625,
+      "delta_PctRural": 1.2008252994986794
     },
     {
       "AreaKey_i": "13175",
       "AreaKey_j": "13289",
-      "coef_distance": 1.6956929426910141,
-      "delta_PctFB": -0.6215505141757591,
-      "delta_PctBlack": 1.241172763986671,
-      "delta_PctRural": -0.9739300201542449
+      "coef_distance": 1.6956929426910168,
+      "delta_PctFB": -0.6215505141757599,
+      "delta_PctBlack": 1.2411727639866712,
+      "delta_PctRural": -0.9739300201542489
     },
     {
       "AreaKey_i": "13023",
       "AreaKey_j": "13289",
-      "coef_distance": 1.5856658383483366,
-      "delta_PctFB": -0.7112531079463672,
-      "delta_PctBlack": 1.1839099033452096,
-      "delta_PctRural": -0.7789817123031213
+      "coef_distance": 1.585665838348337,
+      "delta_PctFB": -0.7112531079463664,
+      "delta_PctBlack": 1.1839099033452098,
+      "delta_PctRural": -0.7789817123031226
     },
     {
       "AreaKey_i": "13107",
       "AreaKey_j": "13279",
-      "coef_distance": 1.5127088644980018,
-      "delta_PctFB": 0.6856031083428504,
-      "delta_PctBlack": -0.9766574487401769,
-      "delta_PctRural": 0.929718621079402
+      "coef_distance": 1.5127088644979958,
+      "delta_PctFB": 0.685603108342848,
+      "delta_PctBlack": -0.976657448740177,
+      "delta_PctRural": 0.929718621079394
     },
     {
       "AreaKey_i": "13107",
       "AreaKey_j": "13209",
-      "coef_distance": 1.4766305446680081,
-      "delta_PctFB": 0.6790202080392561,
+      "coef_distance": 1.4766305446680033,
+      "delta_PctFB": 0.6790202080392544,
       "delta_PctBlack": -1.1063573336390888,
-      "delta_PctRural": 0.7038059198556585
+      "delta_PctRural": 0.7038059198556499
     },
     {
       "AreaKey_i": "13167",
       "AreaKey_j": "13283",
-      "coef_distance": 1.4516556618272893,
-      "delta_PctFB": 0.7156983552157867,
+      "coef_distance": 1.4516556618272944,
+      "delta_PctFB": 0.7156983552157893,
       "delta_PctBlack": -0.8081675145688093,
-      "delta_PctRural": 0.9705386613898059
+      "delta_PctRural": 0.9705386613898117
     }
   ]
 }

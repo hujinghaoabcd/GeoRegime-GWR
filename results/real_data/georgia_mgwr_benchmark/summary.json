@@ -1,0 +1,62 @@
+{
+  "status": "exploratory_external_mgwr_benchmark",
+  "mgwr_version": "2.2.1",
+  "n_counties": 159,
+  "response": "PctBach",
+  "predictors": [
+    "PctFB",
+    "PctBlack",
+    "PctRural"
+  ],
+  "standardization": "global X/y z-score, ddof=0",
+  "kernel": "bisquare",
+  "adaptive": true,
+  "ordinary_gwr_bandwidth": 116,
+  "mgwr_bandwidths": {
+    "Intercept": 92,
+    "PctFB": 101,
+    "PctBlack": 136,
+    "PctRural": 158
+  },
+  "ordinary_gwr": {
+    "rss": 51.082900556856075,
+    "rmse": 0.5668122300472797,
+    "mae": 0.399432936791771,
+    "r2": 0.6787238958688298,
+    "trace_hat": 11.912091033737672,
+    "aicc": 298.9855995813665
+  },
+  "mgwr": {
+    "rss": 50.899379467870425,
+    "rmse": 0.5657931454566466,
+    "mae": 0.4009779777838139,
+    "r2": 0.679878116554274,
+    "trace_hat": 11.368250872698306,
+    "aicc": 297.12013812258783
+  },
+  "k6_regime_restricted_gwr": {
+    "rss": 43.100070636050596,
+    "rmse": 0.5206434736379855,
+    "mae": 0.34497330816164706,
+    "r2": 0.7289303733581723,
+    "trace_hat": 39.70185564133625,
+    "aicc": 354.0114746822055
+  },
+  "delta_mgwr_minus_gwr": {
+    "rss": -0.18352108898564978,
+    "rmse": -0.001019084590633046,
+    "mae": 0.0015450409920428898,
+    "r2": 0.0011542206854442405,
+    "trace_hat": -0.5438401610393662,
+    "aicc": -1.8654614587786682
+  },
+  "delta_k6_minus_mgwr": {
+    "rss": -7.799308831819829,
+    "rmse": -0.04514967181866114,
+    "mae": -0.056004669622166825,
+    "r2": 0.04905225680389835,
+    "trace_hat": 28.333604768637947,
+    "aicc": 56.891336559617685
+  },
+  "interpretation_guard": "This is an in-sample exploratory benchmark. MGWR is an external comparator. The K6 AICc treats the discovered partition as fixed and therefore does not include partition-selection complexity."
+}
