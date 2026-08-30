@@ -17,6 +17,7 @@ on:
       - "experiments/real_data/georgia_gwr_baseline/run_georgia_k6_regime_restricted_gwr.py"
       - "experiments/real_data/georgia_gwr_baseline/compare_georgia_k6_gwr_vs_regime_ols.py"
       - "experiments/real_data/georgia_gwr_baseline/compare_georgia_mgwr_benchmark.py"
+      - "experiments/real_data/georgia_gwr_baseline/compare_georgia_k_candidates_regime_gwr.py"
       - "data/raw/georgia/**"
       - ".github/workflows/basicgwr-validation.yml"
   workflow_dispatch:
@@ -82,6 +83,9 @@ jobs:
       - name: Compare external MGWR benchmark
         run: python experiments/real_data/georgia_gwr_baseline/compare_georgia_mgwr_benchmark.py
 
+      - name: Compare regime GWR across K candidates
+        run: python experiments/real_data/georgia_gwr_baseline/compare_georgia_k_candidates_regime_gwr.py
+
       - name: Show validation summary
         run: |
           cat results/validation/basicgwr_vs_mgwr_georgia/README.md
@@ -100,6 +104,9 @@ jobs:
           cat results/real_data/georgia_mgwr_benchmark/summary.json
           cat results/real_data/georgia_mgwr_benchmark/model_comparison.csv
           cat results/real_data/georgia_mgwr_benchmark/mgwr_bandwidths.csv
+          cat results/real_data/georgia_k_sensitivity_regime_gwr/summary.json
+          cat results/real_data/georgia_k_sensitivity_regime_gwr/k2_k15_regime_gwr_comparison.csv
+          cat results/real_data/georgia_k_sensitivity_regime_gwr/per_regime_bandwidths.csv
           ls -lh results/spatial/georgia_queen_w/*.png results/spatial/georgia_queen_w/*.svg
           ls -lh results/spatial/georgia_local_relationship_edges/*.png results/spatial/georgia_local_relationship_edges/*.svg
           ls -lh results/spatial/georgia_initial_ward_regimes/*.png results/spatial/georgia_initial_ward_regimes/*.svg
@@ -120,7 +127,8 @@ jobs:
             results/real_data/georgia_gwr_baseline \
             results/real_data/georgia_k6_regime_restricted_gwr \
             results/real_data/georgia_k6_model_form_comparison \
-            results/real_data/georgia_mgwr_benchmark
+            results/real_data/georgia_mgwr_benchmark \
+            results/real_data/georgia_k_sensitivity_regime_gwr
           if git diff --cached --quiet; then
             echo "No validation changes to commit."
           else
