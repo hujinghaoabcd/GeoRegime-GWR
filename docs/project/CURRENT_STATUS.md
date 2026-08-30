@@ -6,198 +6,143 @@ Last updated: 2026-08-30
 
 **Phase 1 — GR-GWR component research**
 
-标准 GWR 基线已经完成端到端验证并封存。当前正在逐组件研究 GR-GWR，已经完成显式 `W`、Georgia Queen adjacency、pilot GWR local coefficients、local relationship edge diagnostics 和 Queen-constrained Ward 初始分区探索。
+标准 GWR 基线已经完成端到端验证并封存。当前正在逐组件研究 GR-GWR。已经完成 Georgia Queen W、pilot GWR local coefficients、local relationship edge diagnostics、Queen-constrained Ward 初始分区、K=6 fixed-label regime-restricted GWR、MGWR benchmark 与 K sensitivity。
 
 ## Completed
 
 - 建立独立仓库 `GeoRegime-GWR`。
-- 加入最小 `BasicGWR` 与 `GRGWRBaseline`。
-- 明确当前 GR-GWR 只是 baseline snapshot，不是最终论文算法。
+- 加入最小 `BasicGWR` 与 `GRGWRBaseline`；后者仍是旧 baseline snapshot，不代表最终论文算法。
 - 建立 `00_PROJECT_HANDOFF.md`、CURRENT_STATUS、设计文档、ADR、实验计划和 CI。
 - 引入 canonical Georgia 1990 county benchmark（159 counties）。
-- 当前基线验证只研究标准 GWR，不运行 MGWR 模型；外部 `mgwr` 包只用 `mgwr.gwr.GWR` 和 `mgwr.sel_bw.Sel_BW` 做验证。
-- Canonical Georgia external reference 已复现：bandwidth 117，RSS 51.186192，trace(S) 11.804770，AICc 299.050809，R2 0.678074。
-- 给定相同 bandwidth=117 时，仓库 `BasicGWR` 与 `mgwr.gwr.GWR` 的 159×4 局部系数、拟合值、残差和 hat matrix 达到机器精度一致。
-- 已从 current PyGWRx 抽离 adaptive exhaustive AICc search。
-- 已实现 fixed-distance golden-section AICc search。
-- 已实现 `mgwr==2.2.1` adaptive discrete golden-section compatibility mode。
-- 三模式 Georgia 自动带宽端到端 CI 已通过。
-- 普通测试 CI 已在 Python 3.10 与 3.12 通过。
-- 已建立 Georgia Queen contiguity `W`：159 counties、431 undirected edges、无孤立县、整体连通。
-- 已绘制 ordinary BasicGWR 的 159×4 local coefficients；研究默认 adaptive exhaustive bandwidth = 116。
-- 已建立当前 exploratory local relationship fingerprint：三个标准化局部斜率 `PctFB`, `PctBlack`, `PctRural`；当前不含 intercept、不含 coordinates。
-- 已计算 431 条 Queen 邻接边上的 coefficient-fingerprint Euclidean distance。
-- 已生成 `K=2..15` 的 Queen-constrained Ward 初始分区；所有候选 regime 均空间连通。
+- Standard GWR external validation 已通过：给定相同 bandwidth=117 时，仓库 `BasicGWR` 与 external `mgwr.gwr.GWR` 的局部参数、拟合值、残差、hat matrix 达到机器精度一致。
+- Adaptive research default 使用 exhaustive integer AICc，Georgia k=116，AICc=298.9855995813665。
+- Historical mgwr compatibility mode k=117，AICc=299.0508086830287。
+- Fixed-distance golden search 已实现。
+- Georgia Queen contiguity W：159 counties、431 undirected edges、无孤立县、整体连通。
+- Pilot BasicGWR local coefficient maps 已生成。
+- 当前 exploratory relationship fingerprint：`PctFB`, `PctBlack`, `PctRural` 三个标准化 local slopes；不含 intercept，不含 coordinates。
+- 431 条 Queen edges 的 coefficient-fingerprint Euclidean distance 已计算。
+- Queen-constrained Ward `K=2..15` 初始分区已生成，所有候选 regime 空间连通。
+- Focused K=6 初始分区已检查：sizes = 53,19,17,22,27,21；WCSS=41.17628003831048。
+- Fixed K=6 regime-restricted GWR 已完成：每个 regime 只借本区样本，cross-regime weights=0；无 label refinement。
+- K=6 每区独立 bandwidth 全部顶到 regime size：53,19,17,22,27,21。
+- Fixed K=6 模型形式对照已完成：ordinary GWR vs K6 regime OLS vs K6 regime GWR。
+- External MGWR benchmark 已完成（`mgwr==2.2.1`）。
+- `K=2..15` fixed-partition regime-GWR sensitivity 已完成；当前严格规格可稳定完成 K=2..6。
 
 ## Standard GWR bandwidth policy — FROZEN BY ADR-0003
 
-三条路径必须明确区分。
-
 ### Adaptive research default
 
-```python
-BasicGWR(bandwidth="auto")
-```
+`BasicGWR(bandwidth="auto")`
 
-使用 **exhaustive integer AICc search**：
-
-- selector: `PyGWRxAdaptiveAICcSelector`；
-- Georgia 搜索范围：8–159；
-- selected `k = 116`；
-- final AICc = `298.9855995813665`；
-- 这是后续论文实验中标准 GWR baseline 的默认 adaptive 策略。
+- exhaustive integer AICc search；
+- Georgia selected k=116；
+- AICc=298.9855995813665。
 
 ### Fixed-distance research default
 
-```python
-BasicGWR(bandwidth="auto", adaptive=False)
-```
+`BasicGWR(bandwidth="auto", adaptive=False)`
 
-使用 **continuous golden-section AICc search**：
-
-- selector: `FixedGoldenAICcSelector`；
-- fixed bandwidth 是连续距离变量，因此使用连续一维优化；
-- 功能已实现，但尚未建立独立外部 fixed-GWR benchmark，不得提前声称已经外部数值验证。
+- continuous golden-section AICc search；
+- 功能已实现，尚未建立独立 external fixed-GWR benchmark。
 
 ### Historical mgwr reproduction mode
 
-```python
-BasicGWR(
-    bandwidth="auto",
-    adaptive=True,
-    search_strategy="mgwr_golden",
-)
-```
+`BasicGWR(bandwidth="auto", adaptive=True, search_strategy="mgwr_golden")`
 
-使用 `MGWRCompatibleAICcSelector`：
-
-- Georgia compatibility search range：48–159；
-- selected `k = 117`；
-- final AICc = `299.0508086830287`；
-- external `mgwr.gwr.GWR` AICc = `299.05080868302883`；
-- compatibility mode 只用于历史/官方示例复现，不是研究默认值。
+- Georgia selected k=117；
+- 与 external `mgwr.gwr.GWR` 数值一致。
 
 正式决策：`docs/decisions/ADR-0003-standard-gwr-bandwidth-search-policy.md`。
 
-## Georgia validation — PASSED
-
-固定规格：
-
-- n = 159；
-- response: `PctBach`；
-- predictors: `PctFB`, `PctBlack`, `PctRural`；
-- projected coordinates: `X`, `Y`；
-- X/y z-score (`ddof=0`)；
-- adaptive bisquare；
-- Gaussian GWR AICc。
-
-实际 CI 结果：
-
-1. external `mgwr.sel_bw.Sel_BW` = **117**；
-2. BasicGWR adaptive exhaustive = **116**；
-3. BasicGWR explicit `mgwr_golden` = **117**；
-4. compatibility 117 与 external GWR 的最大局部参数差 = `9.99e-16`；
-5. 最大拟合值差 = `2.66e-15`；
-6. 最大 hat-matrix 差 = `5.55e-17`；
-7. RSS 差 = `-7.11e-15`；
-8. AICc 差 = `-1.14e-13`；
-9. `passes_validation = true`；
-10. exhaustive 116 的 AICc 明确低于 compatibility 117。
-
-关键证据：
-
-- `experiments/validation/basicgwr_vs_mgwr_georgia.py`
-- `results/validation/basicgwr_vs_mgwr_georgia/summary.json`
-- `results/validation/basicgwr_vs_mgwr_georgia/strict_exhaustive_bandwidth_curve.csv`
-- `results/validation/basicgwr_vs_mgwr_georgia/mgwr_compatible_search_trace.csv`
-- `.github/workflows/basicgwr-validation.yml`
-
-## Current GR-GWR baseline flow
-
-当前原始 baseline 代码仍是：
-
-1. 从坐标建立 kNN + MST 空间邻接；
-2. 全域普通 GWR；
-3. 局部斜率标准化；
-4. 斜率 + 坐标组成 clustering features；
-5. 空间约束 Ward 得到初始 regime；
-6. 只在同 regime 内重新做 GWR；
-7. ICM 风格逐点 refinement；
-8. `RSS + lambda * graph-cut count` objective guard；
-9. 最终重新拟合。
-
-**注意：当前 Georgia component experiments 已经与这份旧 baseline snapshot 有意分离。不要把 baseline 代码里的 kNN+MST、coordinates-in-features、ICM 等当成已确认方案。**
-
 ## Current exploratory component choices — NOT FROZEN
 
-Georgia 当前探索规格：
-
-1. `D` 与 `W` 分离：`D` 用于 GWR kernel distance，`W` 用于 topology / allowed merges；
-2. polygon `W` 当前使用 Queen contiguity；
+1. D 与 W 分离：D 负责 GWR kernel distance，W 负责 topology / allowed merges；
+2. Georgia polygon W 当前使用 Queen contiguity；
 3. ordinary GWR 只作为 pilot local-relationship estimator；
 4. fingerprint 暂用三个标准化 local slopes；
 5. intercept 暂不进入 fingerprint；
 6. coordinates 暂不进入 fingerprint；
 7. similarity 暂用 standardized-slope Euclidean distance；
 8. initial segmentation 暂用 Queen-constrained Ward；
-9. `K=2..15` 仅为 exploratory scan；
-10. 当前只把 `K=6` 作为 working candidate 做进一步检查，**不是最终 K**。
+9. K=2..15 仅为 exploratory scan；
+10. 当前继续使用 K=6 作为 working candidate，**不是最终 K**；
+11. fixed K=6 后每个 regime 暂独立自动选 bandwidth；
+12. AICc、lambda、ICM/refinement、最终 bandwidth policy 均未冻结。
 
-当前 K=6 初始结果：
+## Current empirical results
 
-- WCSS = `41.17628003831048`；
-- regime sizes = `53, 19, 17, 22, 27, 21`；
-- all regimes connected = true。
+### Ordinary GWR / MGWR / K=6 restricted GWR
+
+- ordinary GWR: RMSE=0.56681, MAE=0.39943, R2=0.67872, trace(S)=11.9121, AICc=298.99；
+- MGWR: RMSE=0.56579, MAE=0.40098, R2=0.67988, trace(S)=11.3683, AICc=297.12；
+- K=6 regime-restricted GWR: RMSE=0.52064, MAE=0.34497, R2=0.72893, trace(S)=39.7019, conditional AICc=354.01。
+
+MGWR bandwidths：Intercept=92, PctFB=101, PctBlack=136, PctRural=158。
+
+这些目前都是 exploratory / in-sample evidence，不能据此宣称 GR-GWR 已优于 MGWR。
+
+### K sensitivity
+
+当前 fixed-partition -> per-regime GWR：
+
+- K=2: RMSE=0.57225, R2=0.67253；
+- K=3: RMSE=0.55129, R2=0.69608；
+- K=4: RMSE=0.54037, R2=0.70800；
+- K=5: RMSE=0.53018, R2=0.71891；
+- K=6: RMSE=0.52064, R2=0.72893。
+
+K=7..9 出现 size=7 regime，当前严格 bandwidth search 无法稳定完成；K=10..15 出现 size=4 regime，当前 4 参数局部回归明显不适合作为稳定 regime。
+
+当前只说明 K=6 是可稳定估计候选中样本内拟合最好、且没有极小 regime 的 working candidate；不代表最终 K 已选定。
 
 ## Pending method questions — MUST RESOLVE LATER
 
-完整记录见：
+完整记录：`docs/project/PENDING_GRGWR_METHOD_QUESTIONS.md`
 
-`docs/project/PENDING_GRGWR_METHOD_QUESTIONS.md`
+当前重点 OPEN 问题包括：
 
-目前最重要的未解决问题包括：
+- pilot GWR boundary smoothing 与真实边界恢复能力；
+- K selection 与 Kmax/minimum regime size；
+- in-sample K 增大带来的 data-adaptive advantage；
+- per-regime vs shared bandwidth；
+- 所有 K=5/6 regime bandwidth 顶到最大值的含义；
+- MGWR multiscale heterogeneity 与 GR-GWR discontinuous/regime heterogeneity 的正式比较；
+- AICc / effective df / partition-selection complexity；
+- Ward 是否只是 initializer；
+- refinement / ICM / lambda 如何定义；
+- spatial / blocked CV、partition stability、synthetic known-boundary validation；
+- intercept / coordinates / uncertainty-aware fingerprint 等消融。
 
-- 普通 GWR 会平滑真实边界，为什么还能作为分区依据？pilot GWR 是否会丢失过多 boundary signal？
-- 是否需要 `initial segmentation -> regime-restricted GWR -> label refinement` 的后续迭代修正？
-- local relationship fingerprint 是否应该包含 intercept、估计不确定性或其他信息？
-- coordinates 是否应该永远排除，还是仅在显式 `W` 存在时排除？
-- Ward 是最终 segmentation 方法还是只应作为 initializer？
-- regime 数量 K 如何选择？WCSS 不能单独决定 K。
-- `K_max` 应如何由最小 regime size / 可识别性约束定义，而不是人为设 15？
-- 最终 K 是否应主要依据 spatial/blocked CV，并结合 AICc/BIC、stability 和 1-SE rule？
+这些问题全部保持 OPEN，不在当前阶段强行解决。
 
-这些问题目前都**不得写成已解决或已冻结**。
+## Current algorithm path
 
-## Not frozen
+为了先看完整算法行为，当前不重构总体思路，继续既有研究链：
 
-以下 GR-GWR 组件全部尚未冻结：
+`ordinary pilot GWR -> Queen-constrained Ward initial regimes -> fixed-regime restricted GWR -> label refinement -> restricted GWR refit -> iterate / converge`
 
-- polygon Queen/Rook 的最终默认；
-- point-data `W` 构造；
-- coordinates 是否进入 clustering features；
-- intercept 是否进入 fingerprint；
-- fingerprint metric / uncertainty weighting；
-- Ward 是否保留；
-- regime 数量选择；
-- K search upper bound；
-- regime minimum size；
-- ICM 是否保留；
-- boundary penalty；
-- shared vs variable-specific regimes；
-- soft boundary / partial borrowing；
-- GR-GWR 最终 bandwidth policy；
-- 参数选择和统计推断。
+当前 K=6 仅作为 working candidate 用于跑通这条完整链。
 
 ## Current highest-priority task
 
-**先单独检查 Georgia 的 exploratory K=6 initial partition 本身是否合理。当前不做 boundary-aware refit，不把 K=6 冻结为最终选择。**
+**在当前 K=6 working partition 上进入第一轮 label refinement。**
+
+要求：
+
+- Queen W 继续作为邻接与连通性约束；
+- 不允许 source regime 因单点移动而被切断；
+- target label 只从当前 label + Queen 邻居 labels 中选择；
+- 不允许产生过小/不可估计 regime；
+- refinement 后重新做 regime-restricted GWR；
+- 记录 label changes、regime sizes、connectivity、boundary edges、RSS/RMSE/MAE/R2 和 objective change；
+- 当前 lambda / objective 仍只是 exploratory baseline，不冻结为论文最终定义。
 
 ## Next tasks
 
-1. 单独绘制并检查 K=6：空间形状、regime size、各 regime fingerprint 中心与离散程度。
-2. 检查是否存在狭长连接、局部碎片、内部 coefficient inconsistency。
-3. 在看清初始 K=6 后，再决定是否进入 regime-restricted refit。
-4. 后续必须用 synthetic boundary DGP 回答 pilot-GWR boundary smoothing 问题。
-5. 后续建立正式 K-selection protocol：spatial/blocked CV + complexity/stability/min-size evidence。
-6. 做 coordinates/intercept/fingerprint/Ward 等消融。
-7. 在证据充分前，不冻结 GR-GWR v1 paper algorithm。
+1. K=6 第一轮 label refinement；
+2. refinement 后 restricted GWR refit；
+3. 若仍有有效 label change，则按既有思路继续迭代到稳定；
+4. 记录完整 convergence path；
+5. 完整链跑通后，再系统解决 K、bandwidth、lambda、AICc、CV、inference 和 synthetic boundary validation。
