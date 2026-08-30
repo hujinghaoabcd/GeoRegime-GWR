@@ -51,18 +51,82 @@
 - `docs/decisions/` 中新增 ADR
 - 如流程发生重大变化，更新本文
 
-## 3. 当前阶段：先固定标准 GWR
+## 3. 标准 GWR 基线已经固定
 
 当前阶段暂时**不研究 MGWR**。
 
-虽然外部参考实现来自 Python 包 `mgwr`，但只允许使用：
+虽然外部参考实现来自 Python 包 `mgwr`，但只使用：
 
 - `mgwr.gwr.GWR`
 - `mgwr.sel_bw.Sel_BW`
 
-用途只有一个：建立可信的标准 GWR 外部基线，并验证仓库自己的 `BasicGWR`。
+用途是建立可信的标准 GWR 外部基线，并验证仓库自己的 `BasicGWR`。
 
-在 `BasicGWR` 与外部标准 GWR 数值一致之前，不急于修改 GR-GWR。
+### 3.1 Canonical Georgia standard-GWR benchmark
+
+固定规格：
+
+- 159 Georgia counties，1990 Census；
+- response: `PctBach`；
+- predictors: `PctFB`, `PctBlack`, `PctRural`；
+- projected coordinates: `X`, `Y`；
+- X 与 y 均按 `ddof=0` 做 z-score；
+- adaptive bisquare；
+- AICc bandwidth selection；
+- standard GWR only。
+
+使用 `mgwr==2.2.1` 的 `mgwr.gwr.GWR` 已在线复现：
+
+- bandwidth = 117；
+- RSS = 51.186192；
+- ENP = 11.804770；
+- AIC = 296.615923；
+- AICc = 299.050809；
+- BIC = 335.912535；
+- R2 = 0.678074；
+- adjusted R2 = 0.652080。
+
+特别注意：`mgwr.GWRResults.RSS` 是 location-wise weighted RSS diagnostic；本项目中的模型级总 RSS 固定使用 `sum(resid_response**2)`。
+
+### 3.2 Repository BasicGWR validation — PASSED
+
+仓库内 `src/georegime_gwr/gwr.py::BasicGWR` 已用相同 Georgia 数据、相同标准化、相同 adaptive bisquare bandwidth=117，与 `mgwr.gwr.GWR` 逐点比较。
+
+比较范围：
+
+- 159 × 4 local parameters；
+- 159 fitted values；
+- 159 residuals；
+- 完整 159 × 159 hat matrix；
+- RSS；
+- trace(S)。
+
+结果：
+
+- max absolute parameter difference = `5.551115123125783e-16`；
+- RMSE parameter difference = `9.131398707249937e-17`；
+- max absolute fitted difference = `5.551115123125783e-16`；
+- max absolute residual difference = `5.551115123125783e-16`；
+- max absolute hat-matrix difference = `5.551115123125783e-17`；
+- BasicGWR RSS = `51.186191553463985`；
+- mgwr.GWR RSS = `51.18619155346399`；
+- trace(S) 两者均为 `11.804769716730094`；
+- tolerance `1e-8` = **PASS**。
+
+结论：差异只有浮点机器精度量级。当前 `BasicGWR` 的标准 Gaussian adaptive-bisquare GWR 核心计算已经可信，可以作为后续 GR-GWR 研究的基础 GWR 引擎。
+
+关键文件：
+
+- `data/raw/georgia/GData_utm.csv`
+- `data/raw/georgia/G_utm.*`
+- `experiments/real_data/georgia_gwr_baseline/reproduce.py`
+- `results/reproduction/georgia_gwr_baseline/summary.json`
+- `experiments/validation/basicgwr_vs_mgwr_georgia.py`
+- `results/validation/basicgwr_vs_mgwr_georgia/summary.json`
+- `results/validation/basicgwr_vs_mgwr_georgia/pointwise_comparison.csv`
+- `.github/workflows/basicgwr-validation.yml`
+
+旧的 Georgia GWR/MGWR 联合复现实验已从当前主分支移除，避免后续研究混入 MGWR。
 
 ## 4. 当前 GR-GWR baseline 流程
 
@@ -83,7 +147,7 @@
 ### Q1. 空间邻接结构 W
 当前代码固定从点坐标构造 `kNN + MST`。但对于 polygon 数据，GIS 中已有 Queen/Rook contiguity；理论上 GR-GWR 更适合直接定义一个标准空间邻接矩阵 `W`，而不是把 kNN+MST 写死为模型定义。
 
-**当前状态：尚未修改。先完成标准 GWR 基线验证。**
+**当前状态：标准 GWR 已验证通过，可以开始正式研究这一问题。**
 
 ### Q2. 坐标是否应进入聚类特征
 当前同时存在坐标进入 clustering feature 与 adjacency/connectivity 空间约束，可能重复，需要消融验证。
@@ -100,47 +164,7 @@
 ### Q6. graph-cut penalty 的解释
 当前 `B(z) = number of adjacency edges crossing regimes`。它是 graph-cut penalty，不是真实几何边界长度。
 
-## 6. 已建立的可信外部基准：Georgia standard GWR
-
-使用 canonical PySAL/libpysal Georgia benchmark，不与其他 `GeorgiaEduc` 变体混淆。
-
-固定规格：
-
-- 159 Georgia counties，1990 Census；
-- response: `PctBach`；
-- predictors: `PctFB`, `PctBlack`, `PctRural`；
-- projected coordinates: `X`, `Y`；
-- X 与 y 均按 `ddof=0` 做 z-score；
-- adaptive bisquare；
-- AICc bandwidth selection；
-- **standard GWR only**。
-
-已使用 `mgwr==2.2.1` 的 `mgwr.gwr.GWR` 在线复现成功：
-
-- bandwidth = 117；
-- RSS = 51.186192；
-- ENP = 11.804770；
-- AIC = 296.615923；
-- AICc = 299.050809；
-- BIC = 335.912535；
-- R2 = 0.678074；
-- adjusted R2 = 0.652080。
-
-带宽与 canonical reference 完全一致，诊断只存在原参考保留三位小数导致的舍入差异。
-
-特别注意：`mgwr.GWRResults.RSS` 是 location-wise weighted RSS diagnostic；本项目中的模型级总 RSS 固定使用 `sum(resid_response**2)`。
-
-关键文件：
-
-- `data/raw/georgia/GData_utm.csv`
-- `data/raw/georgia/G_utm.*`
-- `experiments/real_data/georgia_gwr_baseline/reproduce.py`
-- `results/reproduction/georgia_gwr_baseline/summary.json`
-- `results/reproduction/georgia_gwr_baseline/gwr_parameters.csv`
-
-旧的 Georgia GWR/MGWR 联合复现实验已从当前主分支移除，避免后续研究混入 MGWR。
-
-## 7. 文献定位（当前阶段结论）
+## 6. 文献定位（当前阶段结论）
 
 已经确认：
 
@@ -152,7 +176,7 @@
 
 论文中的首创性声明必须使用谨慎措辞，例如 `To the best of our knowledge`，并把创新限定在完整耦合框架，而不是单个已有组件。
 
-## 8. 新对话恢复顺序
+## 7. 新对话恢复顺序
 
 按以下顺序读取：
 
@@ -169,10 +193,12 @@
 
 `最新 ADR > CURRENT_STATUS > 当前正式设计规范 > 本交接文档中的旧描述 > README`
 
-## 9. 当前下一步
+## 8. 当前下一步
 
-1. 用仓库内 `BasicGWR` 在 canonical Georgia 规格下对照 `mgwr.gwr.GWR`；
-2. 对比 bandwidth、159 × 4 local parameters、fitted values、residuals 与 diagnostics；
-3. 修正 BasicGWR 与标准实现的任何定义差异；
-4. 基础 GWR 验证通过后，再进入 GR-GWR 的 `W / Ward / coordinates-in-features / ICM` 逐组件研究；
+标准 GWR 基线已经验证完成，不需要继续修 BasicGWR 核心计算。下一阶段：
+
+1. 建立最基础 synthetic DGP；
+2. 研究是否把 `W` 从固定 kNN+MST 构造结果提升为显式模型输入；
+3. 对 Queen/Rook、kNN、kNN+MST 做比较；
+4. 对 coordinates-in-features、Ward、ICM 做逐组件消融；
 5. 再决定 GR-GWR v1 paper algorithm。
