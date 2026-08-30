@@ -9,6 +9,7 @@ on:
       - "experiments/validation/basicgwr_vs_mgwr_georgia.py"
       - "experiments/spatial/build_georgia_queen_w.py"
       - "experiments/spatial/plot_georgia_spatial_structure.py"
+      - "experiments/real_data/georgia_gwr_baseline/plot_variable_spatial_distributions.py"
       - "data/raw/georgia/**"
       - ".github/workflows/basicgwr-validation.yml"
   workflow_dispatch:
@@ -49,20 +50,27 @@ jobs:
       - name: Plot Georgia spatial structure
         run: python experiments/spatial/plot_georgia_spatial_structure.py
 
+      - name: Plot Georgia baseline variable spatial distributions
+        run: python experiments/real_data/georgia_gwr_baseline/plot_variable_spatial_distributions.py
+
       - name: Show validation summary
         run: |
           cat results/validation/basicgwr_vs_mgwr_georgia/README.md
           cat results/spatial/georgia_queen_w/summary.json
           ls -lh results/spatial/georgia_queen_w/*.png results/spatial/georgia_queen_w/*.svg
+          ls -lh results/real_data/georgia_gwr_baseline/*.png results/real_data/georgia_gwr_baseline/*.svg
 
       - name: Persist validation outputs
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -f results/validation/basicgwr_vs_mgwr_georgia results/spatial/georgia_queen_w
+          git add -f \
+            results/validation/basicgwr_vs_mgwr_georgia \
+            results/spatial/georgia_queen_w \
+            results/real_data/georgia_gwr_baseline
           if git diff --cached --quiet; then
             echo "No validation changes to commit."
           else
-            git commit -m "test: store GWR validation, Queen W, and Georgia maps [skip ci]"
+            git commit -m "test: store GWR validation and Georgia spatial outputs [skip ci]"
             git push
           fi
