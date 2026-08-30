@@ -6,7 +6,7 @@ Last updated: 2026-08-30
 
 **Phase 1 — GR-GWR component research**
 
-标准 GWR 基线已经完成端到端验证并封存。下一阶段开始逐组件研究 GR-GWR，本阶段最高优先级是空间结构 `W`，然后再研究 clustering features、Ward、ICM 等组件。
+标准 GWR 基线已经完成端到端验证并封存。当前正在逐组件研究 GR-GWR，已经完成显式 `W`、Georgia Queen adjacency、pilot GWR local coefficients、local relationship edge diagnostics 和 Queen-constrained Ward 初始分区探索。
 
 ## Completed
 
@@ -23,6 +23,11 @@ Last updated: 2026-08-30
 - 已实现 `mgwr==2.2.1` adaptive discrete golden-section compatibility mode。
 - 三模式 Georgia 自动带宽端到端 CI 已通过。
 - 普通测试 CI 已在 Python 3.10 与 3.12 通过。
+- 已建立 Georgia Queen contiguity `W`：159 counties、431 undirected edges、无孤立县、整体连通。
+- 已绘制 ordinary BasicGWR 的 159×4 local coefficients；研究默认 adaptive exhaustive bandwidth = 116。
+- 已建立当前 exploratory local relationship fingerprint：三个标准化局部斜率 `PctFB`, `PctBlack`, `PctRural`；当前不含 intercept、不含 coordinates。
+- 已计算 431 条 Queen 邻接边上的 coefficient-fingerprint Euclidean distance。
+- 已生成 `K=2..15` 的 Queen-constrained Ward 初始分区；所有候选 regime 均空间连通。
 
 ## Standard GWR bandwidth policy — FROZEN BY ADR-0003
 
@@ -109,7 +114,7 @@ BasicGWR(
 
 ## Current GR-GWR baseline flow
 
-当前原始 baseline：
+当前原始 baseline 代码仍是：
 
 1. 从坐标建立 kNN + MST 空间邻接；
 2. 全域普通 GWR；
@@ -121,16 +126,61 @@ BasicGWR(
 8. `RSS + lambda * graph-cut count` objective guard；
 9. 最终重新拟合。
 
+**注意：当前 Georgia component experiments 已经与这份旧 baseline snapshot 有意分离。不要把 baseline 代码里的 kNN+MST、coordinates-in-features、ICM 等当成已确认方案。**
+
+## Current exploratory component choices — NOT FROZEN
+
+Georgia 当前探索规格：
+
+1. `D` 与 `W` 分离：`D` 用于 GWR kernel distance，`W` 用于 topology / allowed merges；
+2. polygon `W` 当前使用 Queen contiguity；
+3. ordinary GWR 只作为 pilot local-relationship estimator；
+4. fingerprint 暂用三个标准化 local slopes；
+5. intercept 暂不进入 fingerprint；
+6. coordinates 暂不进入 fingerprint；
+7. similarity 暂用 standardized-slope Euclidean distance；
+8. initial segmentation 暂用 Queen-constrained Ward；
+9. `K=2..15` 仅为 exploratory scan；
+10. 当前只把 `K=6` 作为 working candidate 做进一步检查，**不是最终 K**。
+
+当前 K=6 初始结果：
+
+- WCSS = `41.17628003831048`；
+- regime sizes = `53, 19, 17, 22, 27, 21`；
+- all regimes connected = true。
+
+## Pending method questions — MUST RESOLVE LATER
+
+完整记录见：
+
+`docs/project/PENDING_GRGWR_METHOD_QUESTIONS.md`
+
+目前最重要的未解决问题包括：
+
+- 普通 GWR 会平滑真实边界，为什么还能作为分区依据？pilot GWR 是否会丢失过多 boundary signal？
+- 是否需要 `initial segmentation -> regime-restricted GWR -> label refinement` 的后续迭代修正？
+- local relationship fingerprint 是否应该包含 intercept、估计不确定性或其他信息？
+- coordinates 是否应该永远排除，还是仅在显式 `W` 存在时排除？
+- Ward 是最终 segmentation 方法还是只应作为 initializer？
+- regime 数量 K 如何选择？WCSS 不能单独决定 K。
+- `K_max` 应如何由最小 regime size / 可识别性约束定义，而不是人为设 15？
+- 最终 K 是否应主要依据 spatial/blocked CV，并结合 AICc/BIC、stability 和 1-SE rule？
+
+这些问题目前都**不得写成已解决或已冻结**。
+
 ## Not frozen
 
 以下 GR-GWR 组件全部尚未冻结：
 
-- kNN + MST 是否保留；
-- 是否把标准空间邻接矩阵 `W` 作为显式输入；
-- polygon 的 Queen/Rook；
-- coordinates 是否继续进入 clustering features；
+- polygon Queen/Rook 的最终默认；
+- point-data `W` 构造；
+- coordinates 是否进入 clustering features；
+- intercept 是否进入 fingerprint；
+- fingerprint metric / uncertainty weighting；
 - Ward 是否保留；
 - regime 数量选择；
+- K search upper bound；
+- regime minimum size；
 - ICM 是否保留；
 - boundary penalty；
 - shared vs variable-specific regimes；
@@ -140,14 +190,14 @@ BasicGWR(
 
 ## Current highest-priority task
 
-**基础 GWR 阶段结束。现在进入 GR-GWR 的空间结构设计：是否围绕显式空间邻接矩阵 `W` 重构，而不是把 kNN+MST 写死进模型定义。**
+**先单独检查 Georgia 的 exploratory K=6 initial partition 本身是否合理。当前不做 boundary-aware refit，不把 K=6 冻结为最终选择。**
 
 ## Next tasks
 
-1. 设计显式 `W` 接口，并明确距离矩阵 `D` 与邻接矩阵 `W` 的不同职责。
-2. 建立 globally smooth、piecewise constant、within-regime smooth + between-regime jump 三类基础 DGP。
-3. 比较 Queen/Rook、kNN、kNN+MST。
-4. 做 coordinates-in-features vs no-coordinates 消融。
-5. 做 no-refinement vs ICM-refinement 消融。
-6. 再评估 Ward、regime number、boundary penalty 与 GR-GWR 最终 bandwidth policy。
+1. 单独绘制并检查 K=6：空间形状、regime size、各 regime fingerprint 中心与离散程度。
+2. 检查是否存在狭长连接、局部碎片、内部 coefficient inconsistency。
+3. 在看清初始 K=6 后，再决定是否进入 regime-restricted refit。
+4. 后续必须用 synthetic boundary DGP 回答 pilot-GWR boundary smoothing 问题。
+5. 后续建立正式 K-selection protocol：spatial/blocked CV + complexity/stability/min-size evidence。
+6. 做 coordinates/intercept/fingerprint/Ward 等消融。
 7. 在证据充分前，不冻结 GR-GWR v1 paper algorithm。
