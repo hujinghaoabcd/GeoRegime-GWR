@@ -1,0 +1,47 @@
+{
+  "status": "exploratory_fixed_k6_regime_restricted_gwr",
+  "n_counties": 159,
+  "K": 6,
+  "labels_fixed": true,
+  "label_refinement_applied": false,
+  "boundary_penalty_applied": false,
+  "regime_restricted_borrowing": true,
+  "cross_regime_weights_forced_to_zero": true,
+  "standardization": "global X/y z-score, ddof=0, same as validated Georgia baseline",
+  "kernel": "bisquare",
+  "baseline_bandwidth": 116,
+  "per_regime_bandwidth_policy": "independent adaptive exhaustive integer AICc",
+  "per_regime_bandwidths": {
+    "1": 53,
+    "2": 19,
+    "3": 17,
+    "4": 22,
+    "5": 27,
+    "6": 21
+  },
+  "baseline_metrics": {
+    "rss": 51.082900556856075,
+    "rmse": 0.5668122300472797,
+    "mae": 0.399432936791771,
+    "r2": 0.6787238958688298,
+    "trace_hat": 11.912091033737672,
+    "aicc": 298.9855995813665
+  },
+  "regime_restricted_metrics": {
+    "rss": 43.100070636050596,
+    "rmse": 0.5206434736379855,
+    "mae": 0.34497330816164706,
+    "r2": 0.7289303733581723,
+    "trace_hat": 39.70185564133625,
+    "aicc": 354.0114746822055
+  },
+  "delta_restricted_minus_baseline": {
+    "rss": -7.982829920805479,
+    "rmse": -0.04616875640929419,
+    "mae": -0.054459628630123935,
+    "r2": 0.050206477489342594,
+    "trace_hat": 27.789764607598578,
+    "aicc": 55.025875100839016
+  },
+  "warning": "In-sample exploratory comparison only. K selection, per-regime bandwidth policy, inference, and spatial CV remain unresolved."
+}

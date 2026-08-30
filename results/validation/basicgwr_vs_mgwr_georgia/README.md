@@ -9,7 +9,7 @@ MGWR is not imported or run.
 - strict final AICc: 298.985599581367
 - compatible final AICc: 299.050808683029
 - fixed final AICc: 297.262742145570
-- max |compat parameter - mgwr parameter|: 5.551e-16
-- max |compat fitted - mgwr fitted|: 5.551e-16
+- max |compat parameter - mgwr parameter|: 9.992e-16
+- max |compat fitted - mgwr fitted|: 2.665e-15
 - max |compat hat - mgwr hat|: 5.551e-17
 - validation pass: True
