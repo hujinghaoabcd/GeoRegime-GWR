@@ -1,13 +1,13 @@
-# BasicGWR vs mgwr.GWR — Georgia end-to-end validation
+# Georgia standard-GWR bandwidth validation
 
-The external `mgwr` package is used only for standard GWR and its bandwidth selector.
 MGWR is not imported or run.
 
-- external selected bandwidth: 117
-- BasicGWR selected bandwidth: 117
-- bandwidths identical: True
-- max |parameter difference|: 5.551e-16
-- max |fitted difference|: 5.551e-16
-- max |hat-matrix difference|: 5.551e-17
-- AICc difference: -5.684e-14
-- end-to-end pass: True
+- external mgwr 2.2.1 bandwidth: 117
+- strict exhaustive BasicGWR bandwidth: 116
+- mgwr-compatible BasicGWR bandwidth: 117
+- strict final AICc: 298.985599581367
+- compatible final AICc: 299.050808683029
+- max |compat parameter - mgwr parameter|: 9.992e-16
+- max |compat fitted - mgwr fitted|: 2.665e-15
+- max |compat hat - mgwr hat|: 5.551e-17
+- validation pass: True

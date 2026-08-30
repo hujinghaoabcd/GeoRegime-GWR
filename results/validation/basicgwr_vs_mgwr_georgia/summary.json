@@ -1,37 +1,47 @@
 {
   "n": 159,
-  "external_selected_bandwidth": 117,
-  "basicgwr_selected_bandwidth": 117,
-  "bandwidths_identical": true,
-  "basicgwr_search_range": [
+  "external_mgwr_selected_bandwidth": 117,
+  "strict_exhaustive_selected_bandwidth": 116,
+  "compat_mgwr_golden_selected_bandwidth": 117,
+  "strict_search_strategy": "pygwrx_exhaustive_integer_aicc",
+  "compat_search_strategy": "mgwr_2_2_1_discrete_golden_aicc",
+  "strict_search_range": [
+    8,
+    159
+  ],
+  "compat_search_range": [
     48,
     159
   ],
-  "basicgwr_search_best_aicc": 299.05080868302866,
+  "strict_best_aicc": 298.9855995813664,
+  "compat_search_best_aicc": 299.05080868302866,
+  "strict_final_aicc": 298.9855995813665,
+  "compat_final_aicc": 299.0508086830287,
+  "mgwr_gwr_aicc": 299.05080868302883,
+  "strict_better_than_compat_by_aicc": true,
+  "compat_bandwidth_matches_mgwr": true,
   "parameter_shape": [
     159,
     4
   ],
-  "max_abs_parameter_difference": 5.551115123125783e-16,
-  "rmse_parameter_difference": 9.131398707249937e-17,
-  "max_abs_fitted_difference": 5.551115123125783e-16,
-  "rmse_fitted_difference": 1.3385968826711347e-16,
-  "max_abs_residual_difference": 5.551115123125783e-16,
+  "max_abs_parameter_difference": 9.992007221626409e-16,
+  "rmse_parameter_difference": 1.3875287183879778e-16,
+  "max_abs_fitted_difference": 2.6645352591003757e-15,
+  "rmse_fitted_difference": 3.5407350415821675e-16,
+  "max_abs_residual_difference": 2.6645352591003757e-15,
   "max_abs_hat_matrix_difference": 5.551115123125783e-17,
-  "basicgwr_rss": 51.186191553463985,
+  "compat_rss": 51.186191553463985,
   "mgwr_gwr_rss": 51.18619155346399,
   "rss_difference": -7.105427357601002e-15,
-  "basicgwr_trace_hat": 11.804769716730094,
-  "mgwr_gwr_trace_hat": 11.804769716730094,
-  "basicgwr_final_aicc": 299.0508086830287,
-  "mgwr_gwr_aicc": 299.0508086830288,
-  "aicc_difference": -5.684341886080802e-14,
+  "compat_trace_hat": 11.804769716730096,
+  "mgwr_gwr_trace_hat": 11.804769716730096,
+  "aicc_difference": -1.1368683772161603e-13,
   "max_abs_parameter_difference_by_term": {
-    "Intercept": 1.942890293094024e-16,
-    "PctFB": 5.551115123125783e-16,
-    "PctBlack": 8.326672684688674e-17,
-    "PctRural": 2.7755575615628914e-16
+    "Intercept": 2.498001805406602e-16,
+    "PctFB": 9.992007221626409e-16,
+    "PctBlack": 2.0816681711721685e-16,
+    "PctRural": 3.3306690738754696e-16
   },
   "numerical_tolerance": 1e-12,
-  "passes_end_to_end_validation": true
+  "passes_validation": true
 }
