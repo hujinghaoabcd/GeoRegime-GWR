@@ -1,5 +1,5 @@
 {
-  "status": "exploratory_unified_regime_local_adaptive_equivalence_test",
+  "status": "current_unified_regime_aware_refit_baseline",
   "n_counties": 159,
   "K": 6,
   "one_model_fit": true,
@@ -38,5 +38,5 @@
     "trace_hat_difference": 0.0,
     "rss_difference": -7.105427357601002e-15
   },
-  "interpretation_guard": "This test changes implementation/formulation, not statistical flexibility. If equivalent, one unified fit can represent the six current regime GWR fits, but trace(S) and conditional AICc should remain essentially unchanged."
+  "baseline_note": "Use this unified RegimeAwareGWR refit primitive for subsequent label-refinement and iteration experiments. The statistical-complexity issue is intentionally left open and is not changed by this reformulation."
 }
