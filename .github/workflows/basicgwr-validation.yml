@@ -15,6 +15,7 @@ on:
       - "experiments/real_data/georgia_gwr_baseline/plot_variable_spatial_distributions.py"
       - "experiments/real_data/georgia_gwr_baseline/plot_basicgwr_local_coefficients.py"
       - "experiments/real_data/georgia_gwr_baseline/run_georgia_k6_regime_restricted_gwr.py"
+      - "experiments/real_data/georgia_gwr_baseline/compare_georgia_k6_gwr_vs_regime_ols.py"
       - "data/raw/georgia/**"
       - ".github/workflows/basicgwr-validation.yml"
   workflow_dispatch:
@@ -74,6 +75,9 @@ jobs:
       - name: Run exploratory K6 regime-restricted GWR
         run: python experiments/real_data/georgia_gwr_baseline/run_georgia_k6_regime_restricted_gwr.py
 
+      - name: Compare K6 GWR with regime OLS
+        run: python experiments/real_data/georgia_gwr_baseline/compare_georgia_k6_gwr_vs_regime_ols.py
+
       - name: Show validation summary
         run: |
           cat results/validation/basicgwr_vs_mgwr_georgia/README.md
@@ -86,6 +90,9 @@ jobs:
           cat results/real_data/georgia_k6_regime_restricted_gwr/summary.json
           cat results/real_data/georgia_k6_regime_restricted_gwr/regime_gwr_summary.csv
           cat results/real_data/georgia_k6_regime_restricted_gwr/model_comparison.csv
+          cat results/real_data/georgia_k6_model_form_comparison/summary.json
+          cat results/real_data/georgia_k6_model_form_comparison/model_comparison.csv
+          cat results/real_data/georgia_k6_model_form_comparison/per_regime_comparison.csv
           ls -lh results/spatial/georgia_queen_w/*.png results/spatial/georgia_queen_w/*.svg
           ls -lh results/spatial/georgia_local_relationship_edges/*.png results/spatial/georgia_local_relationship_edges/*.svg
           ls -lh results/spatial/georgia_initial_ward_regimes/*.png results/spatial/georgia_initial_ward_regimes/*.svg
@@ -104,7 +111,8 @@ jobs:
             results/spatial/georgia_local_relationship_edges \
             results/spatial/georgia_initial_ward_regimes \
             results/real_data/georgia_gwr_baseline \
-            results/real_data/georgia_k6_regime_restricted_gwr
+            results/real_data/georgia_k6_regime_restricted_gwr \
+            results/real_data/georgia_k6_model_form_comparison
           if git diff --cached --quiet; then
             echo "No validation changes to commit."
           else
