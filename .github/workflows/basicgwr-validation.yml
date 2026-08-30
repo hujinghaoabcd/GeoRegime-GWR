@@ -11,6 +11,7 @@ on:
       - "experiments/spatial/plot_georgia_spatial_structure.py"
       - "experiments/spatial/analyze_georgia_local_relationship_edges.py"
       - "experiments/spatial/plot_georgia_initial_ward_regimes.py"
+      - "experiments/spatial/inspect_georgia_k6_initial_regimes.py"
       - "experiments/real_data/georgia_gwr_baseline/plot_variable_spatial_distributions.py"
       - "experiments/real_data/georgia_gwr_baseline/plot_basicgwr_local_coefficients.py"
       - "data/raw/georgia/**"
@@ -66,6 +67,9 @@ jobs:
       - name: Plot Georgia initial Queen-constrained Ward regimes
         run: python experiments/spatial/plot_georgia_initial_ward_regimes.py
 
+      - name: Inspect exploratory Georgia K6 partition
+        run: python experiments/spatial/inspect_georgia_k6_initial_regimes.py
+
       - name: Show validation summary
         run: |
           cat results/validation/basicgwr_vs_mgwr_georgia/README.md
@@ -73,9 +77,12 @@ jobs:
           cat results/spatial/georgia_local_relationship_edges/summary.json
           cat results/spatial/georgia_initial_ward_regimes/summary.json
           cat results/spatial/georgia_initial_ward_regimes/ward_partition_diagnostics.csv
+          cat results/spatial/georgia_initial_ward_regimes/k6_focus/summary.json
+          cat results/spatial/georgia_initial_ward_regimes/k6_focus/k6_regime_summary.csv
           ls -lh results/spatial/georgia_queen_w/*.png results/spatial/georgia_queen_w/*.svg
           ls -lh results/spatial/georgia_local_relationship_edges/*.png results/spatial/georgia_local_relationship_edges/*.svg
           ls -lh results/spatial/georgia_initial_ward_regimes/*.png results/spatial/georgia_initial_ward_regimes/*.svg
+          ls -lh results/spatial/georgia_initial_ward_regimes/k6_focus/*.png results/spatial/georgia_initial_ward_regimes/k6_focus/*.svg
           ls -lh results/real_data/georgia_gwr_baseline/*.png results/real_data/georgia_gwr_baseline/*.svg
           cat results/real_data/georgia_gwr_baseline/basicgwr_local_coefficients_summary.csv
 
