@@ -15,6 +15,8 @@ Last updated: 2026-08-30
 - 加入 `GRGWRBaseline`，保留当前 pyGWRx 的主要流程。
 - 明确当前实现只是 baseline，不是最终论文算法。
 - 建立项目交接、架构索引、设计与实验文档体系。
+- 加入基础 GWR / GR-GWR invariants tests 与 GitHub Actions。
+- Python 3.10 与 Python 3.12 CI 均已通过。
 - 当前对模型流程已经恢复到以下认识：
   1. 空间邻接结构；
   2. 第一轮普通 GWR；
@@ -57,15 +59,14 @@ Last updated: 2026-08-30
 
 ## Next tasks
 
-1. 跑通当前 baseline smoke test。
-2. 建立三个最基础 DGP：
+1. 建立三个最基础 DGP：
    - globally smooth；
    - piecewise constant；
    - within-regime smooth + between-regime jump。
-3. 建立 no-refinement vs ICM-refinement 消融。
-4. 建立 coordinates-in-clustering-features vs no-coordinates 消融。
-5. 设计显式 `W` 接口，并比较：
+2. 建立 no-refinement vs ICM-refinement 消融。
+3. 建立 coordinates-in-clustering-features vs no-coordinates 消融。
+4. 设计显式 `W` 接口，并比较：
    - Queen/Rook；
    - kNN；
    - kNN+MST。
-6. 在上述结果出来前，不宣布任何算法组件为最终方案。
+5. 在上述结果出来前，不宣布任何算法组件为最终方案。
