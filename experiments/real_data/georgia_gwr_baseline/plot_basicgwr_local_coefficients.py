@@ -9,8 +9,14 @@ validation path:
     PctBach ~ PctFB + PctBlack + PctRural
 
 The research-default adaptive exhaustive AICc selector is expected to choose
-k=116.  Outputs include one 2x2 figure (PNG + SVG) containing the intercept and
+k=116. Outputs include one 2x2 figure (PNG + SVG) containing the intercept and
 three local slope surfaces, plus county-level and summary CSV tables.
+
+Color normalization follows the observed coefficient range in each panel:
+- coefficients spanning zero use a diverging normalization centered at zero;
+- all-positive or all-negative coefficients use their actual min/max range.
+This keeps every colorbar consistent with colors that can actually occur on
+its corresponding map.
 """
 
 from __future__ import annotations
@@ -20,7 +26,7 @@ import sys
 
 import geopandas as gpd
 import matplotlib.pyplot as plt
-from matplotlib.colors import TwoSlopeNorm
+from matplotlib.colors import Normalize, TwoSlopeNorm
 import numpy as np
 import pandas as pd
 
@@ -103,6 +109,24 @@ def _attach_coefficients(
     return out
 
 
+def _coefficient_norm(values: np.ndarray):
+    """Return a color normalization matching the coefficient values exactly."""
+    vmin = float(np.nanmin(values))
+    vmax = float(np.nanmax(values))
+
+    if not np.isfinite(vmin) or not np.isfinite(vmax):
+        raise RuntimeError("Non-finite coefficient value encountered during plotting")
+
+    if np.isclose(vmin, vmax):
+        pad = max(abs(vmin) * 1e-6, 1e-9)
+        return Normalize(vmin=vmin - pad, vmax=vmax + pad)
+
+    if vmin < 0.0 < vmax:
+        return TwoSlopeNorm(vmin=vmin, vcenter=0.0, vmax=vmax)
+
+    return Normalize(vmin=vmin, vmax=vmax)
+
+
 def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
 
@@ -142,10 +166,7 @@ def main() -> None:
     for ax, term in zip(axes.flat, TERMS):
         col = MAP_COLUMNS[term]
         values = mapped[col].to_numpy(dtype=float)
-        limit = float(np.max(np.abs(values)))
-        if limit <= 0.0:
-            limit = 1.0
-        norm = TwoSlopeNorm(vmin=-limit, vcenter=0.0, vmax=limit)
+        norm = _coefficient_norm(values)
 
         mapped.plot(
             column=col,
