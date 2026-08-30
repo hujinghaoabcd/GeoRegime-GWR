@@ -16,3 +16,22 @@ def test_basic_gwr_runs_and_returns_one_parameter_vector_per_location():
     assert model.fitted_values_.shape == (n,)
     assert model.hat_matrix_.shape == (n, n)
     assert np.all(np.isfinite(model.parameters_))
+    assert model.adaptive_ is True
+    assert model.boundary_policy_ == "pygwrx"
+
+
+def test_auto_policy_defaults_are_explicit():
+    adaptive_default = BasicGWR(bandwidth="auto")
+    assert adaptive_default._resolve_adaptive() is True
+    assert adaptive_default._resolve_search_strategy(True) == "exhaustive"
+
+    adaptive_compat = BasicGWR(
+        bandwidth="auto",
+        adaptive=True,
+        search_strategy="mgwr_golden",
+    )
+    assert adaptive_compat._resolve_search_strategy(True) == "mgwr_golden"
+
+    fixed_default = BasicGWR(bandwidth="auto", adaptive=False)
+    assert fixed_default._resolve_adaptive() is False
+    assert fixed_default._resolve_search_strategy(False) == "golden_section"
