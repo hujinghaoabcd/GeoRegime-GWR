@@ -51,7 +51,20 @@
 - `docs/decisions/` 中新增 ADR
 - 如流程发生重大变化，更新本文
 
-## 3. 当前基线流程
+## 3. 当前阶段：先固定标准 GWR
+
+当前阶段暂时**不研究 MGWR**。
+
+虽然外部参考实现来自 Python 包 `mgwr`，但只允许使用：
+
+- `mgwr.gwr.GWR`
+- `mgwr.sel_bw.Sel_BW`
+
+用途只有一个：建立可信的标准 GWR 外部基线，并验证仓库自己的 `BasicGWR`。
+
+在 `BasicGWR` 与外部标准 GWR 数值一致之前，不急于修改 GR-GWR。
+
+## 4. 当前 GR-GWR baseline 流程
 
 当前 baseline 仍忠于 pyGWRx 的主要执行顺序：
 
@@ -65,57 +78,31 @@
 8. 以 `RSS + lambda * graph-cut boundary count` 做整轮 objective guard；
 9. 最终按稳定 regime 重新拟合每个位置的局部系数。
 
-## 4. 当前已经识别的高优先级研究问题
+## 5. 当前已经识别的高优先级研究问题
 
 ### Q1. 空间邻接结构 W
 当前代码固定从点坐标构造 `kNN + MST`。但对于 polygon 数据，GIS 中已有 Queen/Rook contiguity；理论上 GR-GWR 更适合直接定义一个标准空间邻接矩阵 `W`，而不是把 kNN+MST 写死为模型定义。
 
-**当前状态：尚未修改，仅记录为首要候选重构。**
+**当前状态：尚未修改。先完成标准 GWR 基线验证。**
 
 ### Q2. 坐标是否应进入聚类特征
-当前同时存在：
-
-- 坐标进入 clustering feature；
-- adjacency/connectivity 又限制空间连续性。
-
-可能存在重复空间约束，需要消融验证。
+当前同时存在坐标进入 clustering feature 与 adjacency/connectivity 空间约束，可能重复，需要消融验证。
 
 ### Q3. ICM 是否必要
-当前 ICM 让 regime-restricted GWR 的拟合结果反向修正 regime，但会增加算法复杂度。需要比较：
-
-- 无 refinement；
-- 当前 ICM refinement。
-
-如果增益很小，应优先简化模型。
+当前 ICM 让 regime-restricted GWR 的拟合结果反向修正 regime，但会增加算法复杂度。需要比较无 refinement 与当前 ICM refinement。
 
 ### Q4. 第一轮 GWR 系数是否会被真实边界平滑污染
-当前用普通 GWR 局部系数发现 regime，而普通 GWR 本身可能跨真实边界借样本。必须通过 sharp-boundary simulation 验证是否仍能恢复真实 regime。
+当前用普通 GWR 局部系数发现 regime，而普通 GWR 本身可能跨真实边界借样本。必须通过 sharp-boundary simulation 验证。
 
 ### Q5. shared regime 假设
-当前所有局部斜率共同产生一套 regime map。不同 covariates 可能具有不同边界，需要设计 shared-boundary 与 conflicting-boundary DGP 对比。
+当前所有局部斜率共同产生一套 regime map。不同 covariates 可能具有不同边界，需要 shared-boundary 与 conflicting-boundary DGP 对比。
 
 ### Q6. graph-cut penalty 的解释
-当前：
+当前 `B(z) = number of adjacency edges crossing regimes`。它是 graph-cut penalty，不是真实几何边界长度。
 
-`B(z) = number of adjacency edges crossing regimes`
+## 6. 已建立的可信外部基准：Georgia standard GWR
 
-它是 graph-cut penalty，不是真实几何边界长度。论文不得误称为 exact boundary length。
-
-## 5. 文献定位（当前阶段结论）
-
-已经确认：
-
-- spatial regimes 不是首创；
-- GWR coefficient clustering 不是首创；
-- “区内平滑、区间突变”不是首创；
-- boundary-aware GWR/MGWR 已有研究；
-- 当前尚未找到与“GWR local relationships -> endogenous contiguous regime -> regime-gated GWR -> LOO-guided iterative regime refinement”完全同构的方法。
-
-论文中的首创性声明必须使用谨慎措辞，例如 `To the best of our knowledge`，并把创新限定在完整耦合框架，而不是单个已有组件。
-
-## 6. 已建立的外部基准：Georgia / MGWR
-
-已将 Oshan et al. (2019) / PySAL 的 canonical Georgia benchmark 纳入仓库，不能与其他 `GeorgiaEduc` 变体混淆。
+使用 canonical PySAL/libpysal Georgia benchmark，不与其他 `GeorgiaEduc` 变体混淆。
 
 固定规格：
 
@@ -125,26 +112,47 @@
 - projected coordinates: `X`, `Y`；
 - X 与 y 均按 `ddof=0` 做 z-score；
 - adaptive bisquare；
-- AICc bandwidth selection。
+- AICc bandwidth selection；
+- **standard GWR only**。
 
-已使用 `mgwr==2.2.1` 在线复现成功：
+已使用 `mgwr==2.2.1` 的 `mgwr.gwr.GWR` 在线复现成功：
 
-- GWR bandwidth = 117，AICc = 299.050809，R2 = 0.678074；
-- MGWR bandwidths = [92, 101, 136, 158]，AICc = 297.120138，R2 = 0.679878；
-- 带宽与历史官方 notebook 完全一致，诊断差异仅为原文展示精度造成的四舍五入量级。
+- bandwidth = 117；
+- RSS = 51.186192；
+- ENP = 11.804770；
+- AIC = 296.615923；
+- AICc = 299.050809；
+- BIC = 335.912535；
+- R2 = 0.678074；
+- adjusted R2 = 0.652080。
+
+带宽与 canonical reference 完全一致，诊断只存在原参考保留三位小数导致的舍入差异。
+
+特别注意：`mgwr.GWRResults.RSS` 是 location-wise weighted RSS diagnostic；本项目中的模型级总 RSS 固定使用 `sum(resid_response**2)`。
 
 关键文件：
 
 - `data/raw/georgia/GData_utm.csv`
 - `data/raw/georgia/G_utm.*`
-- `experiments/real_data/georgia_mgwr_2019/reproduce.py`
-- `results/reproduction/georgia_mgwr_2019/summary.json`
-- `results/reproduction/georgia_mgwr_2019/gwr_parameters.csv`
-- `results/reproduction/georgia_mgwr_2019/mgwr_parameters.csv`
+- `experiments/real_data/georgia_gwr_baseline/reproduce.py`
+- `results/reproduction/georgia_gwr_baseline/summary.json`
+- `results/reproduction/georgia_gwr_baseline/gwr_parameters.csv`
 
-该 benchmark 先作为可信的外部 GWR/MGWR 基线。下一步可用仓库内 `BasicGWR` 对照 `mgwr.GWR`，再用于 GR-GWR 实验。
+旧的 Georgia GWR/MGWR 联合复现实验已从当前主分支移除，避免后续研究混入 MGWR。
 
-## 7. 新对话恢复顺序
+## 7. 文献定位（当前阶段结论）
+
+已经确认：
+
+- spatial regimes 不是首创；
+- GWR coefficient clustering 不是首创；
+- “区内平滑、区间突变”不是首创；
+- boundary-aware GWR / multiscale spatially varying coefficient 相关研究已有先例；
+- 当前尚未找到与“GWR local relationships -> endogenous contiguous regime -> regime-gated GWR -> LOO-guided iterative regime refinement”完全同构的方法。
+
+论文中的首创性声明必须使用谨慎措辞，例如 `To the best of our knowledge`，并把创新限定在完整耦合框架，而不是单个已有组件。
+
+## 8. 新对话恢复顺序
 
 按以下顺序读取：
 
@@ -161,14 +169,10 @@
 
 `最新 ADR > CURRENT_STATUS > 当前正式设计规范 > 本交接文档中的旧描述 > README`
 
-但任何发现冲突的人都应尽快同步修正文档。
+## 9. 当前下一步
 
-## 8. 当前下一步
-
-不要直接大改模型。下一阶段首先完成：
-
-1. 用 `BasicGWR` 在 canonical Georgia 规格下对照 `mgwr.GWR`，验证基础 GWR 引擎；
-2. 建立最小 synthetic DGP；
-3. 将 `W` 从“固定 kNN+MST 构造结果”提升为显式模型输入的候选设计；
-4. 对 `W / coordinates-in-features / ICM` 做独立消融；
+1. 用仓库内 `BasicGWR` 在 canonical Georgia 规格下对照 `mgwr.gwr.GWR`；
+2. 对比 bandwidth、159 × 4 local parameters、fitted values、residuals 与 diagnostics；
+3. 修正 BasicGWR 与标准实现的任何定义差异；
+4. 基础 GWR 验证通过后，再进入 GR-GWR 的 `W / Ward / coordinates-in-features / ICM` 逐组件研究；
 5. 再决定 GR-GWR v1 paper algorithm。
