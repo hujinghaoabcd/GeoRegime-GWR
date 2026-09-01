@@ -1,0 +1,145 @@
+{
+  "status": "exploratory_descriptive_boundary_coefficient_jump_diagnostic",
+  "lambda_working_baseline": 0.5,
+  "n_counties": 159,
+  "queen_edges": 431,
+  "final_boundary_edges": 71,
+  "within_regime_edges": 360,
+  "boundary_jump_amplification": [
+    {
+      "term": "PctFB",
+      "boundary_edges": 71,
+      "mean_gr_minus_gwr_jump": 0.3655217063048747,
+      "median_gr_minus_gwr_jump": 0.3071789018719245,
+      "fraction_boundary_edges_gr_jump_gt_gwr": 0.971830985915493,
+      "mean_gr_to_gwr_jump_ratio": 6.932402796426091,
+      "mean_gr_minus_mgwr_jump": 0.3754585996152876,
+      "fraction_boundary_edges_gr_jump_gt_mgwr": 0.9859154929577465,
+      "mean_gr_to_mgwr_jump_ratio": 8.26540996513507
+    },
+    {
+      "term": "PctBlack",
+      "boundary_edges": 71,
+      "mean_gr_minus_gwr_jump": 0.09983395187835141,
+      "median_gr_minus_gwr_jump": 0.05904686025503031,
+      "fraction_boundary_edges_gr_jump_gt_gwr": 0.8591549295774648,
+      "mean_gr_to_gwr_jump_ratio": 4.306619005625793,
+      "mean_gr_minus_mgwr_jump": 0.11662068395377025,
+      "fraction_boundary_edges_gr_jump_gt_mgwr": 0.971830985915493,
+      "mean_gr_to_mgwr_jump_ratio": 9.69951578488586
+    },
+    {
+      "term": "PctRural",
+      "boundary_edges": 71,
+      "mean_gr_minus_gwr_jump": 0.31087063950709937,
+      "median_gr_minus_gwr_jump": 0.2654196406276413,
+      "fraction_boundary_edges_gr_jump_gt_gwr": 0.971830985915493,
+      "mean_gr_to_gwr_jump_ratio": 15.166016921085971,
+      "mean_gr_minus_mgwr_jump": 0.32739580669213414,
+      "fraction_boundary_edges_gr_jump_gt_mgwr": 1.0,
+      "mean_gr_to_mgwr_jump_ratio": 61.40904083233545
+    }
+  ],
+  "edge_jump_summary": [
+    {
+      "term": "PctFB",
+      "model": "gwr",
+      "boundary_edges": 71,
+      "interior_edges": 360,
+      "boundary_mean_abs_jump": 0.061614445082029665,
+      "boundary_median_abs_jump": 0.04415539606689711,
+      "interior_mean_abs_jump": 0.029744229750422155,
+      "interior_median_abs_jump": 0.015620133008135993,
+      "boundary_to_interior_mean_ratio": 2.0714755634630335
+    },
+    {
+      "term": "PctFB",
+      "model": "mgwr",
+      "boundary_edges": 71,
+      "interior_edges": 360,
+      "boundary_mean_abs_jump": 0.0516775517716167,
+      "boundary_median_abs_jump": 0.04524049987098666,
+      "interior_mean_abs_jump": 0.028439332611587567,
+      "interior_median_abs_jump": 0.016130289309318077,
+      "boundary_to_interior_mean_ratio": 1.8171154885175034
+    },
+    {
+      "term": "PctFB",
+      "model": "grgwr",
+      "boundary_edges": 71,
+      "interior_edges": 360,
+      "boundary_mean_abs_jump": 0.42713615138690425,
+      "boundary_median_abs_jump": 0.36048204979807996,
+      "interior_mean_abs_jump": 0.0517172126760557,
+      "interior_median_abs_jump": 0.02398299011977459,
+      "boundary_to_interior_mean_ratio": 8.259071386201406
+    },
+    {
+      "term": "PctBlack",
+      "model": "gwr",
+      "boundary_edges": 71,
+      "interior_edges": 360,
+      "boundary_mean_abs_jump": 0.03019215449632891,
+      "boundary_median_abs_jump": 0.0200832283304571,
+      "interior_mean_abs_jump": 0.018784555483330932,
+      "interior_median_abs_jump": 0.013230416625296747,
+      "boundary_to_interior_mean_ratio": 1.6072860772841215
+    },
+    {
+      "term": "PctBlack",
+      "model": "mgwr",
+      "boundary_edges": 71,
+      "interior_edges": 360,
+      "boundary_mean_abs_jump": 0.013405422420910099,
+      "boundary_median_abs_jump": 0.013066734730355495,
+      "interior_mean_abs_jump": 0.009340272114064926,
+      "interior_median_abs_jump": 0.007630630456706998,
+      "boundary_to_interior_mean_ratio": 1.4352282521537802
+    },
+    {
+      "term": "PctBlack",
+      "model": "grgwr",
+      "boundary_edges": 71,
+      "interior_edges": 360,
+      "boundary_mean_abs_jump": 0.13002610637468032,
+      "boundary_median_abs_jump": 0.0819438115661607,
+      "interior_mean_abs_jump": 0.02175458649613279,
+      "interior_median_abs_jump": 0.0131038613537012,
+      "boundary_to_interior_mean_ratio": 5.976951407363888
+    },
+    {
+      "term": "PctRural",
+      "model": "gwr",
+      "boundary_edges": 71,
+      "interior_edges": 360,
+      "boundary_mean_abs_jump": 0.021944816333261025,
+      "boundary_median_abs_jump": 0.016761536168705904,
+      "interior_mean_abs_jump": 0.012067669763585694,
+      "interior_median_abs_jump": 0.007893588476827723,
+      "boundary_to_interior_mean_ratio": 1.8184800183611016
+    },
+    {
+      "term": "PctRural",
+      "model": "mgwr",
+      "boundary_edges": 71,
+      "interior_edges": 360,
+      "boundary_mean_abs_jump": 0.0054196491482262936,
+      "boundary_median_abs_jump": 0.004893581378534684,
+      "interior_mean_abs_jump": 0.00391142987576927,
+      "interior_median_abs_jump": 0.003026094577113919,
+      "boundary_to_interior_mean_ratio": 1.3855928190864981
+    },
+    {
+      "term": "PctRural",
+      "model": "grgwr",
+      "boundary_edges": 71,
+      "interior_edges": 360,
+      "boundary_mean_abs_jump": 0.3328154558403605,
+      "boundary_median_abs_jump": 0.30380143766920564,
+      "interior_mean_abs_jump": 0.055920216405565853,
+      "interior_median_abs_jump": 0.016949385700697296,
+      "boundary_to_interior_mean_ratio": 5.951612444175639
+    }
+  ],
+  "interpretation_guard": "The final regimes are data-adaptive and were learned from the same response data. These edge contrasts are descriptive diagnostics, not independent evidence that the inferred boundaries are true."
+}
