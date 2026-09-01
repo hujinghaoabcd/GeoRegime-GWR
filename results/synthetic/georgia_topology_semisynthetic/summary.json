@@ -1,0 +1,70 @@
+{
+  "status": "single_run_georgia_topology_semisynthetic_prototype",
+  "seed": 20260904,
+  "n": 159,
+  "queen_edges": 431,
+  "K_true": 4,
+  "K_fixed_but_true_boundaries_hidden": true,
+  "true_regime_generation": "deterministic four-source Queen-graph BFS from geographically separated seeds, independent of y",
+  "seed_indices": [
+    48,
+    7,
+    35,
+    150
+  ],
+  "seed_areakeys": [
+    13099,
+    13015,
+    13073,
+    13305
+  ],
+  "true_regime_sizes": [
+    39,
+    52,
+    29,
+    39
+  ],
+  "rho_X": 0.2,
+  "noise_sigma_raw": 0.75,
+  "lambda_working_baseline": 0.5,
+  "gwr_bandwidth": 62,
+  "mgwr_bandwidths": [
+    158,
+    32,
+    37,
+    32
+  ],
+  "initial_ari": 0.5793925701446273,
+  "refined_ari": 0.7857591937706265,
+  "initial_boundary_f1": 0.24806201550387597,
+  "refined_boundary_f1": 0.6769230769230768,
+  "refinement_stop_reason": "no_label_changes",
+  "accepted_refinement_iterations": 3,
+  "metrics": [
+    {
+      "model": "GWR",
+      "fit_rmse": 0.6265989172592588,
+      "slope_coef_rmse": 0.29104246419386587,
+      "true_boundary_jump_recovery": 0.16380052368917816
+    },
+    {
+      "model": "MGWR",
+      "fit_rmse": 0.5361987557407818,
+      "slope_coef_rmse": 0.2956121410338393,
+      "true_boundary_jump_recovery": 0.20535460400498395
+    },
+    {
+      "model": "GR-GWR",
+      "fit_rmse": 0.48419290520356084,
+      "slope_coef_rmse": 0.23940221078463286,
+      "true_boundary_jump_recovery": 0.661212306787603
+    },
+    {
+      "model": "Oracle GR-GWR",
+      "fit_rmse": 0.4605512364296041,
+      "slope_coef_rmse": 0.10160020132535011,
+      "true_boundary_jump_recovery": 0.9976569425738991
+    }
+  ],
+  "warning": "Single realization with K fixed. This tests irregular real geography/topology, not K selection or final Monte Carlo performance."
+}
