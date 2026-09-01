@@ -1,0 +1,137 @@
+name: boundary-noise-monte-carlo
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/boundary-noise-monte-carlo.yml"
+      - "experiments/synthetic/run_boundary_noise_monte_carlo_chunk.py"
+      - "experiments/synthetic/aggregate_boundary_noise_monte_carlo.py"
+      - "experiments/synthetic/run_boundary_noise_phase_scenario.py"
+      - "src/georegime_gwr/**"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  simulate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      max-parallel: 10
+      matrix:
+        scenario: [null_forced_k3, weak, moderate, strong, high_noise_failure]
+        chunk: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install environment
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "numpy==1.26.4" "scipy==1.11.4" "pandas==2.2.3" "scikit-learn==1.5.2" "mgwr==2.2.1"
+
+      - name: Resolve scenario
+        id: scenario
+        shell: bash
+        run: |
+          case "${{ matrix.scenario }}" in
+            null_forced_k3)
+              echo "delta=0.0" >> "$GITHUB_OUTPUT"
+              echo "noise=0.75" >> "$GITHUB_OUTPUT"
+              ;;
+            weak)
+              echo "delta=0.5" >> "$GITHUB_OUTPUT"
+              echo "noise=0.75" >> "$GITHUB_OUTPUT"
+              ;;
+            moderate)
+              echo "delta=1.0" >> "$GITHUB_OUTPUT"
+              echo "noise=0.75" >> "$GITHUB_OUTPUT"
+              ;;
+            strong)
+              echo "delta=2.0" >> "$GITHUB_OUTPUT"
+              echo "noise=0.35" >> "$GITHUB_OUTPUT"
+              ;;
+            high_noise_failure)
+              echo "delta=1.5" >> "$GITHUB_OUTPUT"
+              echo "noise=2.0" >> "$GITHUB_OUTPUT"
+              ;;
+            *) exit 2 ;;
+          esac
+
+      - name: Run paired Monte Carlo chunk
+        shell: bash
+        run: |
+          SEED_START=$((20300000 + ${{ matrix.chunk }} * 10))
+          python experiments/synthetic/run_boundary_noise_monte_carlo_chunk.py \
+            --scenario "${{ matrix.scenario }}" \
+            --delta "${{ steps.scenario.outputs.delta }}" \
+            --noise "${{ steps.scenario.outputs.noise }}" \
+            --seed-start "$SEED_START" \
+            --reps 10 \
+            --chunk "${{ matrix.chunk }}" \
+            --output mc_chunks
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mc-${{ matrix.scenario }}-${{ matrix.chunk }}
+          path: mc_chunks/*.csv
+          retention-days: 7
+
+  aggregate:
+    needs: simulate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install aggregation environment
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "numpy==1.26.4" "pandas==2.2.3" "matplotlib==3.9.4"
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: mc-*
+          path: mc_chunks
+          merge-multiple: true
+
+      - name: Aggregate paired Monte Carlo results
+        run: |
+          python experiments/synthetic/aggregate_boundary_noise_monte_carlo.py \
+            --input mc_chunks \
+            --output results/synthetic/boundary_noise_monte_carlo
+          cat results/synthetic/boundary_noise_monte_carlo/scenario_summary.csv
+          cat results/synthetic/boundary_noise_monte_carlo/paired_differences.csv
+
+      - name: Persist outputs
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f results/synthetic/boundary_noise_monte_carlo
+          if git diff --cached --quiet; then
+            echo "No changes."
+            exit 0
+          fi
+          git commit -m "test: store paired boundary-noise Monte Carlo [skip ci]"
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git rebase origin/main
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            sleep 3
+          done
+          exit 1
