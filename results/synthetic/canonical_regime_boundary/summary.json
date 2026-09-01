@@ -1,0 +1,83 @@
+{
+  "status": "single_run_canonical_synthetic_prototype",
+  "seed": 20260901,
+  "grid": "25x25",
+  "n": 625,
+  "K_true": 3,
+  "K_given_but_boundaries_hidden": true,
+  "rho_X": 0.2,
+  "noise_sigma_raw": 0.75,
+  "lambda_working_baseline": 0.5,
+  "minimum_regime_n_guard": 6,
+  "gwr_bandwidth": 92,
+  "mgwr_bandwidths": {
+    "Intercept": 558,
+    "X1": 69,
+    "X2": 55,
+    "X3": 60
+  },
+  "true_regime_sizes": {
+    "1": 275,
+    "2": 182,
+    "3": 168
+  },
+  "initial_ari": 0.767102485681145,
+  "refined_ari": 0.9594008738615171,
+  "initial_boundary_f1": 0.24896265560165975,
+  "refined_boundary_f1": 0.8521739130434782,
+  "refinement_stop_reason": "no_label_changes",
+  "refinement_accepted_iterations": 6,
+  "scaling": {
+    "x_mean": [
+      0.027138590268779017,
+      0.04273266799953183,
+      0.04362515008542729
+    ],
+    "x_sd": [
+      0.9790584374157854,
+      0.9739089501817266,
+      0.965936172503978
+    ],
+    "y_mean": -0.11583054855504263,
+    "y_sd": 1.6697463278234397,
+    "noise_sigma_raw": 0.75
+  },
+  "model_fit": [
+    {
+      "model": "OLS",
+      "rss": 568.173315417467,
+      "rmse": 0.9534554549993131,
+      "mae": 0.7446876350351498,
+      "r2": 0.09092269533205288
+    },
+    {
+      "model": "GWR",
+      "rss": 129.48857997181062,
+      "rmse": 0.45517219593786373,
+      "mae": 0.35324145940792523,
+      "r2": 0.792818272045103
+    },
+    {
+      "model": "MGWR",
+      "rss": 113.5610815001015,
+      "rmse": 0.4262601675035592,
+      "mae": 0.3344274276353567,
+      "r2": 0.8183022695998377
+    },
+    {
+      "model": "GR-GWR",
+      "rss": 103.87122861195199,
+      "rmse": 0.40766894139623044,
+      "mae": 0.329188659867501,
+      "r2": 0.8338060342208768
+    },
+    {
+      "model": "Oracle GR-GWR",
+      "rss": 102.77490805200095,
+      "rmse": 0.4055118406202235,
+      "mae": 0.3270424821608622,
+      "r2": 0.8355601471167985
+    }
+  ],
+  "interpretation_guard": "Single realization only. K=3 is fixed and known to the experimenter, but true boundary locations are hidden from estimated GR-GWR. This prototype is for behavioral validation before Monte Carlo, noise-strength, K-selection, and out-of-sample experiments."
+}
