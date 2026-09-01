@@ -1,0 +1,37 @@
+{
+  "status": "single_realization_boundary_strength_noise_phase_diagram",
+  "seed": 20260903,
+  "grid": "25x25",
+  "n": 625,
+  "K_fixed": 3,
+  "true_boundary_locations_hidden": true,
+  "lambda_working_baseline": 0.5,
+  "delta_values": [
+    0.0,
+    0.5,
+    1.0,
+    1.5,
+    2.0
+  ],
+  "noise_values": [
+    0.35,
+    0.75,
+    1.25,
+    2.0
+  ],
+  "common_random_numbers_across_scenarios": true,
+  "cells": 20,
+  "cells_grgwr_beats_gwr_rmse": 17,
+  "cells_grgwr_beats_mgwr_rmse": 17,
+  "first_delta_beating_mgwr_by_noise": {
+    "0.35": 0.0,
+    "0.75": 0.0,
+    "1.25": 0.0,
+    "2.0": 0.0
+  },
+  "best_refined_ari": 1.0,
+  "worst_refined_ari": 0.6324251982934134,
+  "best_boundary_f1": 1.0,
+  "worst_boundary_f1": 0.05063291139240506,
+  "interpretation_guard": "Single common-random-number realization per cell. Delta=0 has no coefficient discontinuity, so the latent three-region geometry is not statistically identifiable and its ARI/F1 should not be interpreted as a recovery target. This grid is diagnostic only; transition cells require Monte Carlo replication."
+}
