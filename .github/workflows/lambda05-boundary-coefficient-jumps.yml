@@ -1,0 +1,62 @@
+name: lambda05-boundary-coefficient-jumps
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/lambda05-boundary-coefficient-jumps.yml"
+      - "experiments/real_data/georgia_gwr_baseline/analyze_georgia_lambda05_boundary_coefficient_jumps.py"
+      - "results/real_data/georgia_lambda05_coefficient_comparison/county_coefficient_comparison.csv"
+      - "results/spatial/georgia_queen_w/edge_list.csv"
+      - "data/raw/georgia/**"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install plotting environment
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "numpy==1.26.4" "pandas==2.2.3" "matplotlib==3.8.4" "geopandas==0.14.4"
+
+      - name: Analyze boundary coefficient jumps
+        run: python experiments/real_data/georgia_gwr_baseline/analyze_georgia_lambda05_boundary_coefficient_jumps.py
+
+      - name: Show diagnostic tables
+        run: |
+          cat results/real_data/georgia_lambda05_boundary_coefficient_jumps/boundary_jump_amplification.csv
+          cat results/real_data/georgia_lambda05_boundary_coefficient_jumps/edge_jump_summary.csv
+          cat results/real_data/georgia_lambda05_boundary_coefficient_jumps/summary.json
+
+      - name: Persist outputs
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f results/real_data/georgia_lambda05_boundary_coefficient_jumps
+          if git diff --cached --quiet; then
+            echo "No changes."
+          else
+            git commit -m "test: store lambda05 boundary coefficient jumps [skip ci]"
+            for attempt in 1 2 3; do
+              git fetch origin main
+              git rebase origin/main
+              if git push origin HEAD:main; then
+                exit 0
+              fi
+              sleep 3
+            done
+            exit 1
+          fi
