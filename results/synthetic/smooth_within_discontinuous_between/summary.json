@@ -1,0 +1,100 @@
+{
+  "status": "single_run_smooth_within_discontinuous_between_prototype",
+  "seed": 20260902,
+  "grid": "25x25",
+  "n": 625,
+  "K_true": 3,
+  "K_given_but_boundaries_hidden": true,
+  "rho_X": 0.2,
+  "noise_sigma_raw": 0.75,
+  "lambda_working_baseline": 0.5,
+  "truth_design": "smooth coefficient fields within regimes plus regime-specific discontinuous shifts",
+  "true_regime_sizes": {
+    "1": 275,
+    "2": 182,
+    "3": 168
+  },
+  "true_within_regime_coefficient_sd_standardized": {
+    "X1": {
+      "1": 0.11202058108473824,
+      "2": 0.0771715570324248,
+      "3": 0.07464274684911286
+    },
+    "X2": {
+      "1": 0.041392183185330625,
+      "2": 0.04634400259636203,
+      "3": 0.045967491573969094
+    },
+    "X3": {
+      "1": 0.0639170075989262,
+      "2": 0.04784566585090556,
+      "3": 0.04635821287655595
+    }
+  },
+  "gwr_bandwidth": 96,
+  "mgwr_bandwidths": {
+    "Intercept": 294,
+    "X1": 69,
+    "X2": 67,
+    "X3": 122
+  },
+  "initial_ari": 0.881870950990456,
+  "refined_ari": 0.9328339332798861,
+  "initial_boundary_f1": 0.4229074889867841,
+  "refined_boundary_f1": 0.6724137931034482,
+  "refinement_stop_reason": "global_objective_guard_rejected_sweep",
+  "refinement_accepted_iterations": 2,
+  "scaling": {
+    "x_mean": [
+      -0.020468762282693717,
+      -0.05493038924666276,
+      0.024811705389838012
+    ],
+    "x_sd": [
+      1.0440410390626473,
+      0.9886898927875398,
+      0.9889778640749384
+    ],
+    "y_mean": -0.08213875663963814,
+    "y_sd": 1.5073702887791605,
+    "noise_sigma_raw": 0.75
+  },
+  "model_fit": [
+    {
+      "model": "OLS",
+      "rss": 578.9807850010543,
+      "rmse": 0.962480782146681,
+      "mae": 0.7642899864713946,
+      "r2": 0.07363074399831315
+    },
+    {
+      "model": "GWR",
+      "rss": 150.45194641848602,
+      "rmse": 0.49063541889021595,
+      "mae": 0.3843593795921143,
+      "r2": 0.7592768857304224
+    },
+    {
+      "model": "MGWR",
+      "rss": 147.3707588171728,
+      "rmse": 0.48558543440621904,
+      "mae": 0.3816156901899592,
+      "r2": 0.7642067858925236
+    },
+    {
+      "model": "GR-GWR",
+      "rss": 136.6394785133357,
+      "rmse": 0.467571562032313,
+      "mae": 0.37719266387301587,
+      "r2": 0.7813768343786629
+    },
+    {
+      "model": "Oracle GR-GWR",
+      "rss": 136.7467301451022,
+      "rmse": 0.46775503015164205,
+      "mae": 0.37820219661203125,
+      "r2": 0.7812052317678365
+    }
+  ],
+  "interpretation_guard": "Single realization only. K=3 is fixed. The truth contains both continuous within-regime coefficient variation and discrete boundary jumps. Results are behavioral diagnostics before Monte Carlo and bandwidth/complexity sensitivity work."
+}
