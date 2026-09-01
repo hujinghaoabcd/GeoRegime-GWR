@@ -1,0 +1,25 @@
+{
+  "status": "single_seed_5x4_boundary_noise_phase_prototype",
+  "n_scenarios": 20,
+  "positive_boundary_scenarios": 16,
+  "delta_values": [
+    0.0,
+    0.5,
+    1.0,
+    1.5,
+    2.0
+  ],
+  "noise_values": [
+    0.5,
+    0.75,
+    1.0,
+    1.5
+  ],
+  "wins_vs_gwr_coef_rmse": 15,
+  "wins_vs_mgwr_coef_rmse": 15,
+  "wins_vs_best_gwr_mgwr_coef_rmse": 15,
+  "mean_positive_boundary_f1": 0.6113595357860042,
+  "mean_positive_ari": 0.8976150155759999,
+  "mean_gr_oracle_gap_coef_rmse": 0.09265064274782593,
+  "warning": "Single seed per cell. K=3 is fixed. delta=0 is intentionally retained as a forced-K stress cell and is not a valid boundary-recovery target. Final publication evidence requires paired Monte Carlo repetitions and K-selection/no-boundary controls."
+}
